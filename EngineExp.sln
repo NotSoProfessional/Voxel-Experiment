@@ -1,0 +1,63 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34330.188
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EngineExp", "EngineExp\EngineExp.vcxproj", "{4A38DF75-2FF5-4010-ABFD-BC6054FE8F73}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "shaders", "shaders", "{900336F7-3D8F-4122-875B-F8CD6BE41BB6}"
+	ProjectSection(SolutionItems) = preProject
+		EngineExp\shaders\programs.txt = EngineExp\shaders\programs.txt
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "fragment", "fragment", "{1BF54C0D-819E-4786-90E3-6EE01C2A39E2}"
+	ProjectSection(SolutionItems) = preProject
+		EngineExp\shaders\fragment\basicFrag.glsl = EngineExp\shaders\fragment\basicFrag.glsl
+		EngineExp\shaders\fragment\fragment.glsl = EngineExp\shaders\fragment\fragment.glsl
+		EngineExp\shaders\fragment\pfragment.glsl = EngineExp\shaders\fragment\pfragment.glsl
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "geometry", "geometry", "{EB6C14E8-B8B6-46AF-978A-1B5313EC50EF}"
+	ProjectSection(SolutionItems) = preProject
+		EngineExp\shaders\geometry\pTestG.glsl = EngineExp\shaders\geometry\pTestG.glsl
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "vertex", "vertex", "{25590FAA-8824-420D-BD99-FF6966136436}"
+	ProjectSection(SolutionItems) = preProject
+		EngineExp\shaders\vertex\pTest.glsl = EngineExp\shaders\vertex\pTest.glsl
+		EngineExp\shaders\vertex\pvertex.glsl = EngineExp\shaders\vertex\pvertex.glsl
+		EngineExp\shaders\vertex\pvertexshortverts.glsl = EngineExp\shaders\vertex\pvertexshortverts.glsl
+		EngineExp\shaders\vertex\test_not_shader.txt = EngineExp\shaders\vertex\test_not_shader.txt
+		EngineExp\shaders\vertex\test_unused.glsl = EngineExp\shaders\vertex\test_unused.glsl
+		EngineExp\shaders\vertex\vertex.glsl = EngineExp\shaders\vertex\vertex.glsl
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4A38DF75-2FF5-4010-ABFD-BC6054FE8F73}.Debug|x64.ActiveCfg = Debug|x64
+		{4A38DF75-2FF5-4010-ABFD-BC6054FE8F73}.Debug|x64.Build.0 = Debug|x64
+		{4A38DF75-2FF5-4010-ABFD-BC6054FE8F73}.Debug|x86.ActiveCfg = Debug|Win32
+		{4A38DF75-2FF5-4010-ABFD-BC6054FE8F73}.Debug|x86.Build.0 = Debug|Win32
+		{4A38DF75-2FF5-4010-ABFD-BC6054FE8F73}.Release|x64.ActiveCfg = Release|x64
+		{4A38DF75-2FF5-4010-ABFD-BC6054FE8F73}.Release|x64.Build.0 = Release|x64
+		{4A38DF75-2FF5-4010-ABFD-BC6054FE8F73}.Release|x86.ActiveCfg = Release|Win32
+		{4A38DF75-2FF5-4010-ABFD-BC6054FE8F73}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{1BF54C0D-819E-4786-90E3-6EE01C2A39E2} = {900336F7-3D8F-4122-875B-F8CD6BE41BB6}
+		{EB6C14E8-B8B6-46AF-978A-1B5313EC50EF} = {900336F7-3D8F-4122-875B-F8CD6BE41BB6}
+		{25590FAA-8824-420D-BD99-FF6966136436} = {900336F7-3D8F-4122-875B-F8CD6BE41BB6}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3B7AA1ED-B460-426B-A619-DE6015D53494}
+	EndGlobalSection
+EndGlobal
