@@ -9,37 +9,26 @@ uniform mat4 viewMatrix;
 
 out vec2 texCoord;
 
-in VS_OUT{
-	vec2 uv;
-	bool offset;
-} gs_in[];
-
 void main(void){
-	vec4 pointPos = gl_in[0].gl_Position + vec4(1,1,1,0);
-
-	//if (gs_in[0].offset){
-	//	pointPos = pointPos+vec4(0,0,1,0);
-	//}
-
-	vec2 uv =gs_in[0].uv + vec2(1,1); 
+	vec4 pointPos = gl_in[0].gl_Position;
 	vec4 vertexPos = vec4(0, 0, 0, 0) + pointPos;
 	gl_Position = projectionMatrix * viewMatrix * modelMatrix * vertexPos;
-	texCoord = vec2(0, 0) * uv;
+	texCoord = vec2(0, 1);
 	EmitVertex();
 
-	vertexPos = vec4(pointPos.x-uv.x, pointPos.y, pointPos.z, 1);
+	vertexPos = vec4(1, 0, 0, 0) + pointPos;
 	gl_Position = projectionMatrix * viewMatrix * modelMatrix * vertexPos;
-	texCoord = vec2(1, 0)* uv;
+	texCoord = vec2(1, 1);
 	EmitVertex();
 	
-	vertexPos = vec4(pointPos.x, pointPos.y-uv.y, pointPos.z, 1);
+	vertexPos = vec4(0, 1, 0, 0) + pointPos;
 	gl_Position = projectionMatrix * viewMatrix * modelMatrix * vertexPos;
-	texCoord = vec2(0, 1)* uv;
+	texCoord = vec2(0, 0);
 	EmitVertex();
 	
-	vertexPos = vec4(pointPos.x-uv.x, pointPos.y-uv.y, pointPos.z, 1);
+	vertexPos = vec4(1, 1, 0, 0) + pointPos;
 	gl_Position = projectionMatrix * viewMatrix * modelMatrix * vertexPos;
-	texCoord = vec2(1, 1)* uv;
+	texCoord = vec2(1, 0);
 	EmitVertex();
 
 	EndPrimitive();
