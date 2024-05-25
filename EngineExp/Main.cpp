@@ -687,6 +687,13 @@ int main() {
 
 	glfwWindowHint(GLFW_SAMPLES, 4);
 
+	int monitorCount;
+	GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
+	const GLFWvidmode* mode = glfwGetVideoMode(monitors[1]);
+
+	int xPos, yPos;
+	glfwGetMonitorPos(monitors[1], &xPos, &yPos);
+
 	GLFWwindow* window = glfwCreateWindow(1280, 960, "EngineExp", NULL, NULL);
 	if (!window) {
 		Log::GLLogErr("GLFW ERROR: window or opengl context creation failed!");
@@ -699,6 +706,8 @@ int main() {
 		Log::GLLogErr("GLAD ERROR: failed to initialise function pointers!");
 		//std::cout << "Glad failed to initialise function pointers!" << std::endl;
 	}
+
+	glfwSetWindowPos(window, ((mode->width - 1280)/2) + xPos, ((mode->height - 960)/2) + yPos);
 
 	glGetIntegerv(GL_GPU_MEM_INFO_CURRENT_AVAILABLE_MEM_NVX,
 		&cur_avail_mem_kb);
@@ -895,6 +904,9 @@ int main() {
 				//int val = 1;
 
 				int val = ((k + j + i) % 2 == 0) ? 1 : 0;
+
+				if (!i || !j || !k) val = 1;
+				if (i==7 || j==7 || k==7) val = 1;
 				//int val = 0;
 				//if ((k + j + i) % 3 == 0) val = 1;
 
@@ -926,7 +938,7 @@ int main() {
 	endTime = glfwGetTime();
 
 	startTime = glfwGetTime();
-	std::vector<uint16_t> verts;
+	std::vector<uint32_t> verts;
 
 	mb.BuildMesh(flatchunk, verts);
 	endTime = glfwGetTime();
@@ -939,10 +951,10 @@ int main() {
 	glGenBuffers(1, &eVBO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, eVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(uint16_t)*verts.size(), verts.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(uint32_t)*verts.size(), verts.data(), GL_STATIC_DRAW);
 	
 	glBindVertexArray(eVAO);
-	glVertexAttribIPointer(0, 1, GL_UNSIGNED_SHORT, 0, (void*)0);
+	glVertexAttribIPointer(0, 1, GL_UNSIGNED_INT, 0, (void*)0);
 	glEnableVertexAttribArray(0);
 	glBindVertexArray(0);
 

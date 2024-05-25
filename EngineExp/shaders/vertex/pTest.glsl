@@ -6,7 +6,7 @@ in vec3 position;
 
 out VS_OUT {
 	vec2 uv;
-	bool offset;
+	int face;
 } vs_out;
 
 void main(void) {
@@ -18,10 +18,37 @@ void main(void) {
 	vs_out.uv.x = float((aVertData >> 3) & 7);
 	vs_out.uv.y = float((aVertData) & 7);
 
-	if (float((aVertData >> 15) & 1) == 1){
-		pos.z = pos.z+1;
-	}else{
-		vs_out.offset = false;
+	int face = int((aVertData >> 15) & 7);
+	vs_out.face = face;
+
+	switch (face) {
+	case 1:
+		pos.z = pos.z + 1;
+
+		break;
+
+	case 2:
+		pos.y = pos.y;
+		pos.z = pos.z +1;
+
+		break;
+
+	case 3:
+		pos.z = pos.z + 1;
+		pos.y = pos.y - 1;
+		break;
+
+	case 4:
+		//pos.x = pos.x-1;
+		pos.z = pos.z + 1;
+
+		break;
+
+	case 5:
+		pos.x = pos.x-1;
+		pos.z = pos.z + 1;
+
+		break;
 	}
 
 	gl_Position = vec4(pos, 1.0);

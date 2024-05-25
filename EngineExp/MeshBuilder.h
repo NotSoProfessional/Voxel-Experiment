@@ -10,12 +10,12 @@ class MeshBuilder
 	static const uint16_t CHUNK_CUBED = CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE;
 
 public:
-	void BuildMesh(uint8_t chunk[CHUNK_CUBED], std::vector<uint16_t>& verts) {
+	void BuildMesh(uint8_t chunk[CHUNK_CUBED], std::vector<uint32_t>& verts) {
 		uint8_t* faces = FindVisibleFaces(chunk);
 
 		//std::vector<uint16_t> verts;
 
-		for (Face face = BACK; face < FRONT + 1; face = static_cast<Face>(face << 1)) {
+		for (Face face = BACK; face < RIGHT+1; face = static_cast<Face>(face << 1)) {
 			std::cout << face << std::endl;
 
 			meshSize* meshedFaces = GreedyMesh(faces, face);
@@ -102,6 +102,8 @@ private:
 	uint8_t* FindVisibleFaces(uint8_t chunk[CHUNK_CUBED]) {
 		uint8_t* faces = new uint8_t[CHUNK_CUBED]();
 
+		int visibleBlocks = 0;
+
 		for (int y = 0; y < CHUNK_SIZE; y++) {
 			for (int z = 0; z < CHUNK_SIZE; z++) {
 				for (int x = 0; x < CHUNK_SIZE; x++) {
@@ -136,10 +138,14 @@ private:
 
 						adjIndex = ConvertCoords(x + 1, z, y);
 						if (x != CHUNK_SIZE - 1 && !chunk[adjIndex]) faces[index] |= RIGHT;
+
+						if (faces[index] != 0) visibleBlocks += 1;
 					}
 				}
 			}
 		}
+
+		std::cout << "Visible blocks in chunk: " << visibleBlocks << std::endl;
 
 		return faces;
 	}
@@ -162,15 +168,15 @@ private:
 		case TOP:
 		case BOTTOM:
 			x = &k;
-			y = &j;
-			z = &i;
+			y = &i;
+			z = &j;
 
 			break;
 		case LEFT:
 		case RIGHT:
-			x = &k;
-			y = &i;
-			z = &j;
+			x = &i;
+			y = &j;
+			z = &k;
 
 			break;
 		}
@@ -377,35 +383,35 @@ private:
 	}
 
 	struct LocalPoint {
-		uint16_t data = 0;
+		uint32_t data = 0;
 
-		void SetOffset(uint16_t offset) {
-			offset = offset << 15;
-			data = offset |= (data & 32767);
+		void SetFace(uint32_t face) {
+			face = face << 15;
+			data = face |= (data & 4294737919);
 		}
 
-		void SetX(uint16_t x) {
+		void SetX(uint32_t x) {
 			x = x << 12;
-			data = x |= (data & 36863);
+			data = x |= (data & 4294938623);
 		}
 
-		void SetY(uint16_t y) {
+		void SetY(uint32_t y) {
 			y = y << 9;
-			data = y |= (data & 61951);
+			data = y |= (data & 4294963711);
 		}
 
-		void SetZ(uint16_t z) {
+		void SetZ(uint32_t z) {
 			z = z << 6;
-			data = z |= (data & 65087);
+			data = z |= (data & 4294966847);
 		}
 
-		void SetU(uint16_t u) {
+		void SetU(uint32_t u) {
 			u = u << 3;
-			data = u |= (data & 65479);
+			data = u |= (data & 4294967239);
 		}
 
-		void SetV(uint16_t v) {
-			data = v |= (data & 65528);
+		void SetV(uint32_t v) {
+			data = v |= (data & 4294967288);
 		}
 
 		void SetAll(vec5 vec) {
@@ -416,18 +422,18 @@ private:
 			SetV(vec.v);
 		}
 
-		void SetAll(uint8_t x, uint8_t y, uint8_t z, uint8_t u, uint8_t v, uint8_t offset) {
+		void SetAll(uint32_t x, uint32_t y, uint32_t z, uint32_t u, uint32_t v, uint32_t face) {
 			SetX(x);
 			SetY(y);
 			SetZ(z);
 			SetU(u);
 			SetV(v);
 
-			SetOffset(offset);
+			SetFace(face);
 		}
 	};
 
-	void GenerateGeometryShaderInput(meshSize* meshedFaces, Face face, std::vector<uint16_t>& points) {
+	void GenerateGeometryShaderInput(meshSize* meshedFaces, Face face, std::vector<uint32_t>& points) {
 		for (int i = 0; i < CHUNK_CUBED; i++) {
 			if (!meshedFaces[i].uv) {
 				continue;
@@ -438,37 +444,41 @@ private:
 			uint8_t x = facePos.x, y = facePos.y, z = facePos.z;
 			uint8_t u = meshedFaces[i].GetU(), v = meshedFaces[i].GetV();
 
-			uint8_t offset = 0;
+			uint32_t faceShaderVal = 0;
 
 			LocalPoint p;
 
 			switch (face) {
 			case FRONT:
-				offset = 1;
+				faceShaderVal = 1;
 
+				break;
 			case BACK:
-				//x++;
-				//y++;
-
-				p.SetAll(x, y, z, static_cast<uint8_t>(u-1), static_cast<uint8_t>(v-1), offset);
+				faceShaderVal = 0;
 
 				break;
 
-			case BOTTOM:
-				y--;
 			case TOP:
-				p.SetAll(x, z, y, static_cast<uint8_t>(u - 1), static_cast<uint8_t>(v - 1), offset);
+				faceShaderVal = 2;
+
+				break;
+			case BOTTOM:
+				faceShaderVal = 3;
+				//p.SetAll(x, z, y, static_cast<uint8_t>(u - 1), static_cast<uint8_t>(v - 1), faceShaderVal);
 
 				break;
 
-			case LEFT:
-				x--;
 			case RIGHT:
-
-
+				faceShaderVal = 4;
+				break;
+			case LEFT:
+				faceShaderVal = 5;
+				//p.SetAll(x, z, y, static_cast<uint8_t>(u - 1), static_cast<uint8_t>(v - 1), faceShaderVal);
 				break;
 			}
 
+
+			p.SetAll(x, y, z, static_cast<uint32_t>(u - 1), static_cast<uint32_t>(v - 1), faceShaderVal);
 			points.emplace_back(p.data);
 		}
 	}
