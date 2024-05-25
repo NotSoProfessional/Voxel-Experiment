@@ -6,7 +6,7 @@
 class MeshBuilder
 {
 	static const uint8_t CHUNK_SIZE = 8;
-	static const uint8_t CHUNK_SQUARED = CHUNK_SIZE * CHUNK_SIZE;
+	static const uint16_t CHUNK_SQUARED = CHUNK_SIZE * CHUNK_SIZE;
 	static const uint16_t CHUNK_CUBED = CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE;
 
 public:
@@ -15,10 +15,12 @@ public:
 
 		//std::vector<uint16_t> verts;
 
-		for (Face face = BACK; face < RIGHT+1; face = static_cast<Face>(face << 1)) {
-			std::cout << face << std::endl;
+		meshSize* meshedFaces = new meshSize[CHUNK_CUBED](meshSize());
 
-			meshSize* meshedFaces = GreedyMesh(faces, face);
+		for (Face face = BACK; face < RIGHT+1; face = static_cast<Face>(face << 1)) {
+			//std::cout << face << std::endl;
+
+			GreedyMesh(faces, face, meshedFaces);
 
 			/*std::cout << "=======================================================================" << "\n";
 
@@ -30,16 +32,13 @@ public:
 			}*/
 
 			//GenerateVertices(meshedFaces, face, verts);
-			GenerateGeometryShaderInput(meshedFaces, face, verts);
-
-
-			delete[] meshedFaces;
+			GenerateGeometryShaderInput(meshedFaces, face, verts);		
 		}
 
 		/*for (int i = 0; i < CHUNK_CUBED; i++) {
 			std::cout << meshedFaces[i].GetU() << ", " << meshedFaces[i].GetV() << "\n";
 		}*/
-
+		delete[] meshedFaces;
 		delete[] faces;
 	}
 
@@ -151,8 +150,9 @@ private:
 	}
 
 
-	meshSize* GreedyMesh(uint8_t* faces, Face face) {
-		meshSize* meshSizes = new meshSize[CHUNK_CUBED](meshSize());
+	void GreedyMesh(uint8_t* faces, Face face, meshSize* meshSizes) {
+		std::fill(meshSizes, meshSizes + CHUNK_CUBED, meshSize());
+		//meshSize* meshSizes = new meshSize[CHUNK_CUBED](meshSize());
 
 		uint8_t i, j, k;
 		uint8_t* x = nullptr, *y = nullptr, *z = nullptr;
@@ -271,7 +271,7 @@ private:
 				<< (int)meshSizes[i].GetU() << ", " << (int)meshSizes[i].GetV() << "\n";
 		}*/
 
-		return meshSizes;
+		//return meshSizes;
 	}
 
 	struct vec5 {
@@ -414,13 +414,13 @@ private:
 			data = v |= (data & 4294967288);
 		}
 
-		void SetAll(vec5 vec) {
+		/*void SetAll(vec5 vec) {
 			SetX(vec.x);
 			SetY(vec.y);
 			SetZ(vec.z);
 			SetU(vec.u);
 			SetV(vec.v);
-		}
+		}*/
 
 		void SetAll(uint32_t x, uint32_t y, uint32_t z, uint32_t u, uint32_t v, uint32_t face) {
 			SetX(x);
@@ -451,32 +451,27 @@ private:
 			switch (face) {
 			case FRONT:
 				faceShaderVal = 1;
-
 				break;
 			case BACK:
 				faceShaderVal = 0;
-
 				break;
 
 			case TOP:
 				faceShaderVal = 2;
-
 				break;
+
 			case BOTTOM:
 				faceShaderVal = 3;
-				//p.SetAll(x, z, y, static_cast<uint8_t>(u - 1), static_cast<uint8_t>(v - 1), faceShaderVal);
-
 				break;
 
 			case RIGHT:
 				faceShaderVal = 4;
 				break;
+
 			case LEFT:
 				faceShaderVal = 5;
-				//p.SetAll(x, z, y, static_cast<uint8_t>(u - 1), static_cast<uint8_t>(v - 1), faceShaderVal);
 				break;
 			}
-
 
 			p.SetAll(x, y, z, static_cast<uint32_t>(u - 1), static_cast<uint32_t>(v - 1), faceShaderVal);
 			points.emplace_back(p.data);

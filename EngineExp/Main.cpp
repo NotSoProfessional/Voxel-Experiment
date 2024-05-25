@@ -67,574 +67,11 @@ void _update_fps_counter(GLFWwindow* window) {
 	frame_count++;
 }
 
-struct Vertex {
-	glm::vec3 position;
-	glm::vec2 texCoord;
-};
-
-struct Vertexng {
-	float x;
-	float y;
-	float z;
-	float u;
-	float v;
-};
-
-enum class Direction {
-	UP,
-	DOWN,
-	LEFT,
-	RIGHT,
-	// Add more directions if needed
-};
-
-
-struct mSize {
-	std::uint8_t y =1;
-	std::uint8_t x =1;
-};
-
-struct mLoc {
-	std::uint8_t z = 0;
-	std::uint8_t y = 0;
-	std::uint8_t x = 0;
-
-	/*struct Hash {
-		size_t operator()(const mLoc& loc) const {
-			// Combine the hash values of individual members
-			return std::hash<std::uint8_t>()(loc.z) ^ (std::hash<std::uint8_t>()(loc.y) << 8) ^ (std::hash<std::uint8_t>()(loc.x) << 16);
-		}
-	};
-
-	struct Equal {
-		bool operator()(const mLoc& lhs, const mLoc& rhs) const {
-			return lhs.z == rhs.z && lhs.y == rhs.y && lhs.x == rhs.x;
-		}
-	};
-
-	bool operator<(const mLoc& rhs) const {
-		// Custom less-than operator for mLoc
-		return std::tie(z, y, x) < std::tie(rhs.z, rhs.y, rhs.x);
-	}
-
-
-	bool operator==(const mLoc& rhs) const {
-		// Custom less-than operator for mLoc
-		return std::tie(z, y, x) == std::tie(rhs.z, rhs.y, rhs.x);
-	}*/
-};
-
-enum Faces {
-	BACK = 1,
-	FRONT = 2,
-	UP = 4,
-	DOWN = 8,
-	LEFT = 16,
-	RIGHT = 32
-};
-
-__forceinline mSize*** generateFaceMesh(const std::uint8_t edges[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE], Faces face, mSize*** meshSize) {
-	/*mSize*** meshSize = new mSize * *[CHUNK_SIZE];
-	for (int i = 0; i < CHUNK_SIZE; ++i) {
-		meshSize[i] = new mSize * [CHUNK_SIZE];
-		for (int j = 0; j < CHUNK_SIZE; ++j) {
-			meshSize[i][j] = new mSize[CHUNK_SIZE];
-			for (int k = 0; k < CHUNK_SIZE; ++k) {
-				meshSize[i][j][k] = mSize(1, 1);
-			}
-		}
-	}*/
-
-	// Allocate memory for the third dimension and initialize with mSize(1, 1)
-	for (int i = 0; i < CHUNK_SIZE; ++i) {
-		for (int j = 0; j < CHUNK_SIZE; ++j) {
-			meshSize[i][j] = new mSize[CHUNK_SIZE];
-			std::fill(meshSize[i][j], meshSize[i][j] + CHUNK_SIZE, mSize(1, 1));
-			//std::memset(meshSize[i][j], 0, CHUNK_SIZE * sizeof(mSize));
-		}
-	}
-
-
-	/*mSize*** meshSize = new mSize * *[CHUNK_SIZE];
-	mSize** meshData = new mSize * [CHUNK_SIZE * CHUNK_SIZE];
-	mSize* flatMeshData = new mSize[CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE];
-
-	for (int i = 0; i < CHUNK_SIZE; ++i) {
-		meshSize[i] = meshData + i * CHUNK_SIZE;
-		for (int j = 0; j < CHUNK_SIZE; ++j) {
-			meshData[i * CHUNK_SIZE + j] = flatMeshData + (i * CHUNK_SIZE + j) * CHUNK_SIZE;
-			for (int k = 0; k < CHUNK_SIZE; ++k) {
-				meshSize[i][j][k] = mSize(1, 1);
-			}
-		}
-	}*/
-
-
-	if (face & BACK || face & FRONT) {
-		//std::unordered_multiset<mLoc, mLoc::Hash, mLoc::Equal> locs;
-		//std::priority_queue<mLoc> locs;
-		//std::vector<mLoc> locs;
-
-		for (int z = 0; z < CHUNK_SIZE; z++) {
-			for (int y = 1; y < CHUNK_SIZE; y++) {
-				for (int x = 0; x < CHUNK_SIZE; x++) {
-					if (edges[z][y][x] & face && edges[z][y - 1][x] & face) {
-						meshSize[z][y][x].y = meshSize[z][y - 1][x].y + 1;
-						meshSize[z][y - 1][x] = mSize(0, 0);
-						//locs.push_back(mLoc(z, y, x));
-						//locs.erase(std::remove(locs.begin(), locs.end(), mLoc(z, y - 1, x)), locs.end());
-						//locs.insert(mLoc(z, y, x));
-						//locs.erase(mLoc(z, y - 1, x));
-					}
-
-					if (!(edges[z][y][x] & face)) meshSize[z][y][x] = mSize(0, 0);
-
-					if (y == 1) {
-						if (!(edges[z][0][x] & face)) meshSize[z][0][x] = mSize(0, 0);
-					}
-				}
-			}
-		}
-
-		/*for (mLoc loc : locs) {
-			if (meshSize[loc.z][loc.y][loc.x].x || meshSize[loc.z][loc.y][loc.x].y) {
-				if (!meshSize[loc.z][loc.y][loc.x - 1].x && !meshSize[loc.z][loc.y][loc.x - 1].y) {
-					continue;
-				}
-				else {
-					if ((edges[loc.z][loc.y][loc.x] & face) && (edges[loc.z][loc.y - 1][loc.x] & face)) {
-						if (meshSize[loc.z][loc.y][loc.x].y == meshSize[loc.z][loc.y][loc.x - 1].y) {
-							meshSize[loc.z][loc.y][loc.x].x = meshSize[loc.z][loc.y][loc.x - 1].x + 1;
-							meshSize[loc.z][loc.y][loc.x - 1] = mSize(0, 0);
-						}
-					}
-				}
-			}
-		}*/
-
-		for (int z = 0; z < CHUNK_SIZE; z++) {
-			for (int y = 1; y < CHUNK_SIZE; y++) {
-				for (int x = 1; x < CHUNK_SIZE; x++) {
-					if (meshSize[z][y][x].x || meshSize[z][y][x].y) {
-						if (!meshSize[z][y][x - 1].x && !meshSize[z][y][x - 1].y) {
-							continue;
-						}
-						else {
-							if ((edges[z][y][x] & face) && (edges[z][y - 1][x] & face)) {
-								if (meshSize[z][y][x].y == meshSize[z][y][x - 1].y) {
-									meshSize[z][y][x].x = meshSize[z][y][x - 1].x + 1;
-									meshSize[z][y][x - 1] = mSize(0, 0);
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-
-	if (face & LEFT || face & RIGHT) {
-		for (int x = 0; x < CHUNK_SIZE; x++) {
-			for (int y = 1; y < CHUNK_SIZE; y++) {
-				for (int z = 0; z < CHUNK_SIZE; z++) {
-					if (edges[z][y][x] & face && edges[z][y - 1][x] & face) {
-						meshSize[z][y][x].y = meshSize[z][y - 1][x].y + 1;
-						meshSize[z][y - 1][x] = mSize(0, 0);
-					}
-
-					if (!(edges[z][y][x] & face)) meshSize[z][y][x] = mSize(0, 0);
-
-					if (y == 1) {
-						if (!(edges[z][0][x] & face)) meshSize[z][0][x] = mSize(0, 0);
-					}
-				}
-			}
-		}
-
-		for (int x = 0; x < CHUNK_SIZE; x++) {
-			for (int y = 1; y < CHUNK_SIZE; y++) {
-				for (int z = 1; z < CHUNK_SIZE; z++) {
-					if (meshSize[z][y][x].x || meshSize[z][y][x].y) {
-						if (!meshSize[z-1][y][x].x && !meshSize[z-1][y][x].y) {
-							continue;
-						}
-						else {
-
-							//edges[z][y][x] &&
-							if ((edges[z][y][x] & face) && (edges[z][y - 1][x] & face)) {
-								if (meshSize[z][y][x].y == meshSize[z-1][y][x].y) {
-									meshSize[z][y][x].x = meshSize[z-1][y][x].x + 1;
-									meshSize[z-1][y][x] = mSize(0, 0);
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	if (face & UP || face & DOWN) {
-		for (int y = 0; y < CHUNK_SIZE; y++) {
-			for (int z = 1; z < CHUNK_SIZE; z++) {
-				for (int x = 0; x < CHUNK_SIZE; x++) {
-					if (edges[z][y][x] & face && edges[z-1][y][x] & face) {
-						meshSize[z][y][x].y = meshSize[z-1][y][x].y + 1;
-						meshSize[z-1][y][x] = mSize(0, 0);
-					}
-
-					if (!(edges[z][y][x] & face)) meshSize[z][y][x] = mSize(0, 0);
-
-					if (z == 1) {
-						if (!(edges[0][y][x] & face)) meshSize[0][y][x] = mSize(0, 0);
-					}
-				}
-			}
-		}
-
-		for (int y = 0; y < CHUNK_SIZE; y++) {
-			for (int z = 1; z < CHUNK_SIZE; z++) {
-				for (int x = 1; x < CHUNK_SIZE; x++) {
-					if (meshSize[z][y][x].x || meshSize[z][y][x].y) {
-						if (!meshSize[z][y][x - 1].x && !meshSize[z][y][x - 1].y) {
-							continue;
-						}
-						else {
-
-							//edges[z][y][x] &&
-							if ((edges[z][y][x] & face) && (edges[z-1][y][x] & face)) {
-								if (meshSize[z][y][x].y == meshSize[z][y][x - 1].y) {
-									meshSize[z][y][x].x = meshSize[z][y][x - 1].x + 1;
-									meshSize[z][y][x - 1] = mSize(0, 0);
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	return meshSize;
-}
-
-/*for (int z = 0; z < 8; z++) {
-	for (int x = 0; x < 8; x++) {
-		for (int y = 1; y < 8; y++) {
-			if (meshSize[z][y][x].x || meshSize[z][y][x].y) {
-				if (!meshSize[z][y][x - 1].x && !meshSize[z][y][x - 1].y) {
-					continue;
-				}
-				else {
-
-					//edges[z][y][x] &&
-					if ((edges[z][y][x] & face) && (edges[z][y-1][x] & face)) {
-						if (meshSize[z][y][x].y == meshSize[z][y][x - 1].y) {
-							meshSize[z][y][x].x = meshSize[z][y][x - 1].x + 1;
-							meshSize[z][y][x - 1] = mSize(0, 0);
-						}
-					}
-				}
-			}
-		}
-	}
-}*/
-
-
-__forceinline void generateVertices(mSize*** meshSize, std::vector<Vertexng>& vertices, Faces face, std::vector<int>& indices) {
-	for (int z = 0; z < CHUNK_SIZE; z++) {
-		for (int y = 0; y < CHUNK_SIZE; y++) {
-			for (int x = 0; x < CHUNK_SIZE; x++) {
-				if (meshSize[z][y][x].x != 0 || meshSize[z][y][x].y != 0) {
-					/*float zPos = static_cast<float>(z) + 1;
-					float xPos = static_cast<float>(x) +1;
-					float yPos = static_cast<float>(y) +1;
-
-					float xSize = static_cast<float>(meshSize[z][y][x].x);
-					float ySize = static_cast<float>(meshSize[z][y][x].y);*/
-
-					float zPos = z + 1;
-					float xPos = x + 1;
-					float yPos = y + 1;
-
-					float xSize = meshSize[z][y][x].x;
-					float ySize = meshSize[z][y][x].y;
-
-					Vertexng v1, v2, v3, v4;
-
-					if (face & FRONT || face & BACK) {
-						if (face & BACK) {
-							zPos -= 1;
-						}
-
-						/*v1 = {glm::vec3(xPos, yPos, zPos), glm::vec2(0.0f, 0.0f)};
-						v2 = { glm::vec3(xPos - xSize, yPos, zPos), glm::vec2(1.0f * xSize, 0.0f) };
-						v3 = { glm::vec3(xPos - xSize, yPos - ySize, zPos), glm::vec2(1.0f * xSize, 1.0f * ySize) };
-						v4 = { glm::vec3(xPos, yPos - ySize, zPos), glm::vec2(0.0f, 1.0f * ySize) };*/
-
-						v1 = { xPos, yPos, zPos, 0.0f, 0.0f};
-						v2 = { xPos - xSize, yPos, zPos, 1.0f * xSize, 0.0f };
-						v3 = { xPos - xSize, yPos - ySize, zPos, 1.0f * xSize, 1.0f * ySize };
-						v4 = { xPos, yPos - ySize, zPos, 0.0f, 1.0f * ySize };
-
-					}
-
-					if (face & LEFT || face & RIGHT) {
-						if (face & LEFT) {
-							xPos -= 1;
-						}
-
-						/*v1 = {glm::vec3(xPos, yPos, zPos), glm::vec2(0.0f, 0.0f)};
-						v2 = { glm::vec3(xPos, yPos, zPos - xSize), glm::vec2(1.0f * xSize, 0.0f) };
-						v3 = { glm::vec3(xPos, yPos - ySize, zPos - xSize), glm::vec2(1.0f * xSize, 1.0f * ySize) };
-						v4 = { glm::vec3(xPos, yPos - ySize, zPos), glm::vec2(0.0f, 1.0f * ySize) };*/
-
-						v1 = { xPos, yPos, zPos, 0.0f, 0.0f };
-						v2 = { xPos, yPos, zPos - xSize, 1.0f * xSize, 0.0f };
-						v3 = { xPos, yPos - ySize, zPos - xSize, 1.0f * xSize, 1.0f * ySize };
-						v4 = { xPos, yPos - ySize, zPos, 0.0f, 1.0f * ySize };
-					}
-
-					if (face & UP || face & DOWN) {
-						if (face & DOWN) {
-							yPos -= 1;
-						}
-
-						/*v1 = {glm::vec3(xPos, yPos, zPos), glm::vec2(0.0f, 0.0f)};
-						v2 = { glm::vec3(xPos - xSize, yPos, zPos), glm::vec2(1.0f * xSize, 0.0f) };
-						v3 = { glm::vec3(xPos - xSize, yPos, zPos - ySize), glm::vec2(1.0f * xSize, 1.0f * ySize) };
-						v4 = { glm::vec3(xPos, yPos, zPos - ySize), glm::vec2(0.0f, 1.0f * ySize) };*/
-
-						v1 = { xPos, yPos, zPos, 0.0f, 0.0f };
-						v2 = { xPos - xSize, yPos, zPos, 1.0f * xSize, 0.0f };
-						v3 = { xPos - xSize, yPos, zPos - ySize, 1.0f * xSize, 1.0f * ySize };
-						v4 = { xPos, yPos, zPos - ySize, 0.0f, 1.0f * ySize };
-					}
-
-					// Add indices for the current quad
-					int vertexOffset = vertices.size();
-
-					if (face & DOWN || face & LEFT || face & FRONT) {
-						indices.emplace_back(vertexOffset);
-						indices.emplace_back(vertexOffset + 1);
-						indices.emplace_back(vertexOffset + 3);
-						indices.emplace_back(vertexOffset + 2);
-						indices.emplace_back(vertexOffset + 3);
-						indices.emplace_back(vertexOffset + 1);
-					}
-					else {
-						indices.emplace_back(vertexOffset + 1);
-						indices.emplace_back(vertexOffset + 3);
-						indices.emplace_back(vertexOffset + 2);
-						indices.emplace_back(vertexOffset + 3);
-						indices.emplace_back(vertexOffset + 1);
-						indices.emplace_back(vertexOffset);
-					}
-
-					vertices.emplace_back(v1);
-					vertices.emplace_back(v2);
-					vertices.emplace_back(v3);
-					vertices.emplace_back(v4);
-				}
-			}
-		}
-	}
-}
-
-__forceinline void generate3DMesh(const std::uint8_t dchunk[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE], std::vector<Vertexng>& vertices, std::vector<int>& indices) {
-
-	std::uint8_t edges[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE] = { 0 };
-
-	for (int z = 0; z < CHUNK_SIZE; z++) {
-		for (int y = 0; y < CHUNK_SIZE; y++) {
-			for (int x = 0; x < CHUNK_SIZE; x++) {
-				if (dchunk[z][y][x]) {
-					if (z == 0) edges[z][y][x] |= BACK; // back
-					if (z == CHUNK_SIZE-1) edges[z][y][x] |= FRONT; // front
-
-					if (y == CHUNK_SIZE - 1) edges[z][y][x] |= UP; // up
-					if (y == 0) edges[z][y][x] |= DOWN; // down
-
-					if (x == 0) edges[z][y][x] |= LEFT; // left
-					if (x == CHUNK_SIZE - 1) edges[z][y][x] |= RIGHT; // right
-
-					if (z != 0 && !dchunk[z - 1][y][x]) edges[z][y][x] |= BACK; // back
-					if (z != CHUNK_SIZE - 1 && !dchunk[z + 1][y][x]) edges[z][y][x] |= FRONT; // front
-
-					if (y != CHUNK_SIZE - 1 && !dchunk[z][y + 1][x]) edges[z][y][x] |= UP; // up
-					if (y != 0 && !dchunk[z][y - 1][x]) edges[z][y][x] |= DOWN; // down
-
-					if (x != 0 && !dchunk[z][y][x - 1]) edges[z][y][x] |= LEFT; // left
-					if (x != CHUNK_SIZE - 1 && !dchunk[z][y][x + 1]) edges[z][y][x] |= RIGHT; // right
-				}
-			}
-		}
-	}
-
-	mSize*** meshSize = new mSize * *[CHUNK_SIZE];
-
-	// Allocate memory for the second dimension
-	for (int i = 0; i < CHUNK_SIZE; ++i) {
-		meshSize[i] = new mSize * [CHUNK_SIZE];
-	}
-
-	int exSize = 0;
-
-	mSize*** meshSizeBACK = generateFaceMesh(edges, BACK, meshSize);
-	//vertices.reserve(4);
-	generateVertices(meshSizeBACK, vertices, BACK, indices);
-
-	mSize*** meshSizeFRONT = generateFaceMesh(edges, FRONT, meshSize);
-	//vertices.reserve(4);
-	generateVertices(meshSizeFRONT, vertices, FRONT, indices);
-
-	mSize*** meshSizeUP = generateFaceMesh(edges, UP, meshSize);
-	//vertices.reserve(4);
-	generateVertices(meshSizeUP, vertices, UP, indices);
-
-	mSize*** meshSizeDOWN = generateFaceMesh(edges, DOWN, meshSize);
-	//vertices.reserve(4);
-	generateVertices(meshSizeDOWN, vertices, DOWN, indices);
-
-	mSize*** meshSizeLEFT = generateFaceMesh(edges, LEFT, meshSize);
-	//vertices.reserve(4);
-	generateVertices(meshSizeLEFT, vertices, LEFT, indices);
-
-	mSize*** meshSizeRIGHT = generateFaceMesh(edges, RIGHT, meshSize);
-	//vertices.reserve(4);
-	generateVertices(meshSizeRIGHT, vertices, RIGHT, indices);
-
-	/*std::cout << edges[0][0][0] << "\n";
-
-	if (edges[0][0][0] & BACK) std::cout << "BACK\n";
-	if (edges[0][0][0] & FRONT) std::cout << "FRONT\n";
-	if (edges[0][0][0] & UP) std::cout << "UP\n";
-	if (edges[0][0][0] & DOWN) std::cout << "DOWN\n";
-	if (edges[0][0][0] & LEFT) std::cout << "LEFT\n";
-	if (edges[0][0][0] & RIGHT) std::cout << "RIGHT\n";
-
-
-	for (int i = 0; i < 8; i++) {
-		for (int j = 0; j < 8; j++) {
-			for (int k = 0; k < 8; k++) {
-				std::cout << (edges[i][j][k] & BACK) << ", ";
-			}
-
-			std::cout << "\n";
-		}
-
-		std::cout << "\n";
-	}
-
-	std::cout << "\n";
-	std::cout << "\n";
-	std::cout << "\n";
-
-	for (int i = 0; i < 8; i++) {
-		for (int j = 0; j < 8; j++) {
-			for (int k = 0; k < 8; k++) {
-				std::cout << "(" << meshSizeBACK[i][j][k].y << ", " << meshSizeBACK[i][j][k].x << "), ";
-			}
-
-			std::cout << "\n";
-		}
-
-		std::cout << "\n";
-	}*/
-}
-
-void generateMesh(const int chunk[16][16], std::vector<Vertex>& vertices) {
-	mSize meshSize[16][16] = {};
-
-	for (int y = 1; y < 16; y++) {
-		for (int x = 0; x < 16; x++) {
-			if (chunk[y][x] && chunk[y-1][x]) {
-				meshSize[y][x].y = meshSize[y-1][x].y + 1;
-				meshSize[y - 1][x] = mSize(0,0);
-			}
-#
-			if (!chunk[y][x]) meshSize[y][x] = mSize(0, 0);
-
-			if (y == 1) {
-				if (!chunk[0][x]) meshSize[0][x] = mSize(0, 0);
-			}
-		}
-	}
-
-	//TODO: USE PAIRS/UNORDERED MAP TO ONLY LOOP THROUGH LOCATIONS WITH A SIZE
-
-	for (int x = 1; x < 16; x++) {
-		for (int y = 0; y < 16; y++) {
-			if (meshSize[y][x].x || meshSize[y][x].y) {
-				if (!meshSize[y][x - 1].x && !meshSize[y][x - 1].y) {
-					continue;
-				}
-				else {
-					if (chunk[y][x] && chunk[y - 1][x]) {
-						if (meshSize[y][x].y == meshSize[y][x - 1].y) {
-							meshSize[y][x].x = meshSize[y][x-1].x + 1;
-							meshSize[y][x-1] = mSize(0, 0);
-						}
-					}
-				}
-			}
-		}
-	}
-
-	for (int y = 0; y < 16; y++) {
-		for (int x = 0; x < 16; x++) {
-			if (meshSize[y][x].x != 0 || meshSize[y][x].y != 0) {
-				float xPos = static_cast<float>(x);
-				float yPos = static_cast<float>(y);
-
-				float xSize = static_cast<float>(meshSize[y][x].x);
-				float ySize = static_cast<float>(meshSize[y][x].y);
-
-				Vertex v1 = { glm::vec3(xPos, yPos, 0.0f), glm::vec2(0.0f, 0.0f) };
-				Vertex v2 = { glm::vec3(xPos - xSize, yPos, 0.0f), glm::vec2(1.0f*xSize, 0.0f) };
-				Vertex v3 = { glm::vec3(xPos - xSize, yPos - ySize, 0.0f), glm::vec2(1.0f*xSize, 1.0f*ySize) };
-				Vertex v4 = { glm::vec3(xPos, yPos - ySize, 0.0f), glm::vec2(0.0f, 1.0f*ySize) };
-
-				// Add vertices to the vector
-				vertices.push_back(v1);
-				vertices.push_back(v2);
-				vertices.push_back(v3);
-
-				vertices.push_back(v1);
-				vertices.push_back(v3);
-				vertices.push_back(v4);
-			}
-		}
-	}
-
-	std::cout << "Finished!\n";
-}
-
-void generateFace(const int chunk[16][16], int x, int y, Direction direction, std::vector<Vertex>& vertices) {
-	// Generate quad vertices
-	float xPos = static_cast<float>(x);
-	float yPos = static_cast<float>(y);
-
-	Vertex v1 = { glm::vec3(xPos, yPos, 0.0f), glm::vec2(0.0f, 0.0f) };
-	Vertex v2 = { glm::vec3(xPos + 1.0f, yPos, 0.0f), glm::vec2(1.0f, 0.0f) };
-	Vertex v3 = { glm::vec3(xPos + 1.0f, yPos + 1.0f, 0.0f), glm::vec2(1.0f, 1.0f) };
-	Vertex v4 = { glm::vec3(xPos, yPos + 1.0f, 0.0f), glm::vec2(0.0f, 1.0f) };
-
-	// Add vertices to the vector
-	vertices.push_back(v1);
-	vertices.push_back(v2);
-	vertices.push_back(v3);
-
-	vertices.push_back(v1);
-	vertices.push_back(v3);
-	vertices.push_back(v4);
-}
-
 // timing
 float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
 
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+Camera camera(glm::vec3(0.0f, 0.0f, 0.0f));
 float lastX = gl_width / 2.0f;
 float lastY = gl_height / 2.0f;
 bool firstMouse = true;
@@ -694,7 +131,7 @@ int main() {
 	int xPos, yPos;
 	glfwGetMonitorPos(monitors[1], &xPos, &yPos);
 
-	GLFWwindow* window = glfwCreateWindow(1280, 960, "EngineExp", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(gl_width, gl_height, "EngineExp", NULL, NULL);
 	if (!window) {
 		Log::GLLogErr("GLFW ERROR: window or opengl context creation failed!");
 		//std::cout << "Window or OpenGL context creation failed!" << std::endl;
@@ -707,7 +144,7 @@ int main() {
 		//std::cout << "Glad failed to initialise function pointers!" << std::endl;
 	}
 
-	glfwSetWindowPos(window, ((mode->width - 1280)/2) + xPos, ((mode->height - 960)/2) + yPos);
+	glfwSetWindowPos(window, ((mode->width - gl_width)/2) + xPos, ((mode->height - gl_height)/2) + yPos);
 
 	glGetIntegerv(GL_GPU_MEM_INFO_CURRENT_AVAILABLE_MEM_NVX,
 		&cur_avail_mem_kb);
@@ -732,113 +169,11 @@ int main() {
 
 	double endTime = glfwGetTime();
 
-	/*float points[] = {
-		0.0f,  0.5f,  0.0f,
-		0.5f, -0.5f,  0.0f,
-		-0.5f, -0.5f,  0.0f
-	};*/
-
-	/*float vertices[] = {
-		// positions          // colors           // texture coords
-		 0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // top right
-		 0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // bottom right
-		-0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
-		-0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left 
-	};*/
-
-	float vertices[] = {
-		// positions          // colors           // texture coords
-		
-	-0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-	 0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-	 0.5f,  0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-	 0.5f,  0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-	-0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-	-0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-
-	-0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-	 0.5f, -0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-	 0.5f,  0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-	 0.5f,  0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-	-0.5f,  0.5f, 0.5f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-	-0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-
-	-0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-	 0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-	 0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-	 0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-	-0.5f, 0.5f, 0.5f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-	-0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-
-	-0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-	 0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-	 0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-	 0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-	-0.5f, -0.5f, 0.5f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-	-0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-
-	 0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-	 0.5f,  0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-	 0.5f,  0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-	 0.5f,  0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-	 0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-	 0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-
-	-0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-	-0.5f,  0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-	-0.5f,  0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-	-0.5f,  0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-	-0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-	-0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f
-	};
-
-	unsigned int indices[] = {
-		0, 1, 3, // first triangle
-		1, 2, 3  // second triangle
-	};
-
-	float cube[] = {
-		0.5f, 0.5f, 0.5f,
-		-0.5f, -0.5f, 0.5f,
-		-0.5f, 0.5f, 0.5f,
-		0.5f, -0.5f, 0.5f,
-		0.5f, 0.5f, -0.5f,
-		-0.5f, -0.5f, -0.5f,
-		-0.5f, 0.5f, -0.5f,
-		0.5f, -0.5f, -0.5f
-	};
-
-	unsigned int VBO, VAO, EBO;
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
-
-	glBindVertexArray(VAO);
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	/*glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);*/
-
-	// position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-	// color attribute
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-	// texture coord attribute
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-	glEnableVertexAttribArray(2);
-
 	//std::cout << "Loaded, compiled, and linked shaders in " << (endTime - startTime)*1000 << " miliseconds" << '\n';
 	Log::GLLog("Loaded, compiled, and linked shaders in %f miliseconds\n", (endTime - startTime) * 1000);
 
 	Shaders::ListShaders();
 	Shaders::ListPrograms();
-
-
-	//std::cout << Shaders::GetUniformLoc("projectedProgram", "view") << "\n";
 
 	unsigned int texture;
 	glGenTextures(1, &texture);
@@ -863,34 +198,6 @@ int main() {
 		std::cout << "Failed to load texture" << std::endl;
 	}
 	stbi_image_free(data);
-
-	int chunk[16][16] = {
-		{ 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1 }, 
-		{ 1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0 }, 
-		{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0 }, 
-		{ 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 0 }, 
-		{ 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0 }, 
-		{ 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1 }, 
-		{ 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0 }, 
-		{ 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1 }, 
-		{ 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0 }, 
-		{ 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1 }, 
-		{ 1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0 }, 
-		{ 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0 }, 
-		{ 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1 }, 
-		{ 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1 }, 
-		{ 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0 }, 
-		{ 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0 }
-	};
-
-	std::cout << (sizeof(chunk) / sizeof(*chunk)) << "\n";
-
-
-	std::vector<Vertexng> vertices2;
-
-	//generateMesh(chunk, vertices2);
-
-	std::uint8_t dchunk[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
 	
 	MeshBuilder mb = MeshBuilder();
 	uint8_t flatchunk[CHUNK_SIZE* CHUNK_SIZE* CHUNK_SIZE];
@@ -905,19 +212,15 @@ int main() {
 
 				int val = ((k + j + i) % 2 == 0) ? 1 : 0;
 
-				if (!i || !j || !k) val = 1;
-				if (i==7 || j==7 || k==7) val = 1;
+				//if (!i || !j || !k) val = 1;
+				//if (i==7 || j==7 || k==7) val = 1;
+				// 
 				//int val = 0;
 				//if ((k + j + i) % 3 == 0) val = 1;
 
 				faces += val * 6;
-				dchunk[i][j][k] = val;
 
 				flatchunk[mb.ConvertCoords(k, j, i)] = val;
-				//dchunk[i][j][k] = ((k+j+i) % 2 == 0) ? 1 : 0;
-				//if ((k + j + i) % 3 == 0) dchunk[i][j][k] = 1;
-				//dchunk[i][j][k] = 1;
-				//std::cout << dchunk[i][j][k] << ", ";
 			}
 
 			//std::cout << "\n";
@@ -930,12 +233,6 @@ int main() {
 	std::cout << "\n";
 	std::cout << faces<<" total faces in chunk\n";
 	std::cout << "\n";
-
-	std::vector<int> indices2;
-
-	startTime = glfwGetTime();
-	//generate3DMesh(dchunk, vertices2, indices2);
-	endTime = glfwGetTime();
 
 	startTime = glfwGetTime();
 	std::vector<uint32_t> verts;
@@ -957,28 +254,6 @@ int main() {
 	glVertexAttribIPointer(0, 1, GL_UNSIGNED_INT, 0, (void*)0);
 	glEnableVertexAttribArray(0);
 	glBindVertexArray(0);
-
-	/*unsigned int VBO2, VAO2, EBO2;
-	glGenVertexArrays(1, &VAO2);
-	glGenBuffers(1, &VBO2);
-	glGenBuffers(1, &EBO2);
-
-	glBindVertexArray(VAO2);
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBO2);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertexng)* vertices2.size(), vertices2.data(), GL_STATIC_DRAW);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO2);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * indices2.size(), indices2.data(), GL_STATIC_DRAW);
-
-	// position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-	// texture coord attribute
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(2);
-
-	std::cout << (indices2.size() / 3) / 2 << " faces rendered, reduction of " << 100 - (((indices2.size() / static_cast<float>(3)) / 2) / faces) * 100.0f << "%\n";*/
 
 
 	GLuint axisVAO, axisVBO;
@@ -1056,24 +331,6 @@ int main() {
 		glViewport(0, 0, gl_width, gl_height);
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		/*Shaders::UseProgram("genQuad");
-
-		glClearColor(0.6f, 0.6f, 0.8f, 1.0f);
-
-		projection = glm::perspective(glm::radians(45.0f), (float)gl_width / (float)gl_height, 0.1f, draw_distance);
-		glm::mat4 view = camera.GetViewMatrix();
-
-		glUniformMatrix4fv(Shaders::GetUniformLoc("genQuad", "model"), 1, GL_FALSE, glm::value_ptr(model));
-		glUniformMatrix4fv(Shaders::GetUniformLoc("genQuad", "view"), 1, GL_FALSE, &view[0][0]);
-		glUniformMatrix4fv(Shaders::GetUniformLoc("genQuad", "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-
-
-
-		glBindTexture(GL_TEXTURE_2D, texture);
-
-
-		glBindVertexArray(eVAO);
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, verts.size());*/
 
 		Shaders::UseProgram("pQuad");
 
