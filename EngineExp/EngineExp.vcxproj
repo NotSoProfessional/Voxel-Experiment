@@ -149,6 +149,7 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="MeshBuilder.h" />
+    <ClInclude Include="MeshBuilder16.h" />
     <ClInclude Include="Shaders.h" />
     <ClInclude Include="stb_image.h" />
   </ItemGroup>

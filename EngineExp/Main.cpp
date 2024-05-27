@@ -21,6 +21,7 @@
 #include <map>
 #include <queue>
 #include "MeshBuilder.h"
+#include "MeshBuilder16.h"
 
 #define GL_GPU_MEM_INFO_TOTAL_AVAILABLE_MEM_NVX 0x9048
 #define GL_GPU_MEM_INFO_CURRENT_AVAILABLE_MEM_NVX 0x9049
@@ -28,7 +29,7 @@
 static int gl_width = 1280;
 static int gl_height = 960;
 
-const std::uint8_t CHUNK_SIZE = 8;
+const std::uint8_t CHUNK_SIZE = 16;
 
 void error_callback(int error, const char* description) {
 	//fprintf(stderr, "Error: %s\n", description);
@@ -126,10 +127,15 @@ int main() {
 
 	int monitorCount;
 	GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
-	const GLFWvidmode* mode = glfwGetVideoMode(monitors[1]);
+
+	int outputMonitor = 0;
+
+	if (monitorCount > 1) outputMonitor = 1;
+
+	const GLFWvidmode* mode = glfwGetVideoMode(monitors[outputMonitor]);
 
 	int xPos, yPos;
-	glfwGetMonitorPos(monitors[1], &xPos, &yPos);
+	glfwGetMonitorPos(monitors[outputMonitor], &xPos, &yPos);
 
 	GLFWwindow* window = glfwCreateWindow(gl_width, gl_height, "EngineExp", NULL, NULL);
 	if (!window) {
@@ -200,6 +206,7 @@ int main() {
 	stbi_image_free(data);
 	
 	MeshBuilder mb = MeshBuilder();
+	MeshBuilder16 mb16 = MeshBuilder16();
 	uint8_t flatchunk[CHUNK_SIZE* CHUNK_SIZE* CHUNK_SIZE];
 
 	int faces = 0;
@@ -237,7 +244,15 @@ int main() {
 	startTime = glfwGetTime();
 	std::vector<uint32_t> verts;
 
-	mb.BuildMesh(flatchunk, verts);
+	switch (CHUNK_SIZE) {
+	case 8:
+		mb.BuildMesh(flatchunk, verts);
+		break;
+	case 16:
+		mb16.BuildMesh(flatchunk, verts);
+		break;
+	}
+	
 	endTime = glfwGetTime();
 
 	std::cout << "Generated chunk mesh in " << (endTime - startTime) * 1000 << "ms\n";
@@ -321,6 +336,18 @@ int main() {
 
 	glClearColor(0.6f, 0.6f, 0.8f, 1.0f);
 
+	std::string chunkShader;
+
+	switch (CHUNK_SIZE) {
+	case 8:
+		chunkShader = "pQuad";
+		break;
+
+	case 16:
+		chunkShader = "chunk16";
+		break;
+	}
+
 	while (!glfwWindowShouldClose(window)) {
 		_update_fps_counter(window);
 
@@ -332,14 +359,14 @@ int main() {
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		Shaders::UseProgram("pQuad");
+		Shaders::UseProgram(chunkShader);
 
 		projection = glm::perspective(glm::radians(45.0f), (float)gl_width / (float)gl_height, 0.1f, draw_distance);
 		glm::mat4 view = camera.GetViewMatrix();
 		
-		glUniformMatrix4fv(Shaders::GetUniformLoc("pQuad", "modelMatrix"), 1, GL_FALSE, glm::value_ptr(model));
-		glUniformMatrix4fv(Shaders::GetUniformLoc("pQuad", "viewMatrix"), 1, GL_FALSE, &view[0][0]);
-		glUniformMatrix4fv(Shaders::GetUniformLoc("pQuad", "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projection));
+		glUniformMatrix4fv(Shaders::GetUniformLoc(chunkShader.c_str(), "modelMatrix"), 1, GL_FALSE, glm::value_ptr(model));
+		glUniformMatrix4fv(Shaders::GetUniformLoc(chunkShader.c_str(), "viewMatrix"), 1, GL_FALSE, &view[0][0]);
+		glUniformMatrix4fv(Shaders::GetUniformLoc(chunkShader.c_str(), "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projection));
 
 		glBindTexture(GL_TEXTURE_2D, texture);
 
