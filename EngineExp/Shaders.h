@@ -9,10 +9,13 @@ class Shaders {
 public:
     static void LoadAll();
     static void UseProgram(std::string);
+    static void UseProgram(char*);
+    static void UseProgram(GLuint);
     static void ReloadProgramShaders();
 
     static GLint GetUniformLoc(const GLchar*, const GLchar*);
     static GLint GetUniformLoc(GLuint, const GLchar*);
+    static GLuint GetProgramId(std::string);
 
     static void ListPrograms();
     static void ListShaders();

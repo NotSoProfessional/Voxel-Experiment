@@ -20,8 +20,13 @@
 #include <set>
 #include <map>
 #include <queue>
-#include "MeshBuilder.h"
+#include "MeshBuilder8.h"
 #include "MeshBuilder16.h"
+#include "MeshBuilder.h"
+#include "MeshBuilderNew8.h"
+#include "MeshBuilderNew16.h"
+
+#include <math.h>
 
 #define GL_GPU_MEM_INFO_TOTAL_AVAILABLE_MEM_NVX 0x9048
 #define GL_GPU_MEM_INFO_CURRENT_AVAILABLE_MEM_NVX 0x9049
@@ -29,7 +34,8 @@
 static int gl_width = 1280;
 static int gl_height = 960;
 
-const std::uint8_t CHUNK_SIZE = 16;
+MeshBuilder* mb;
+
 
 void error_callback(int error, const char* description) {
 	//fprintf(stderr, "Error: %s\n", description);
@@ -106,6 +112,36 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 }
 
 int main() {
+	
+	int input = -1;
+
+	std::cout << "Select chunk size:\n";
+	std::cout << "1) 8x8x8\n";
+	std::cout << "2) 16x16x16\n\n";
+
+	while (input == -1) {
+		std::cin >> input;
+
+		switch (input) {
+		case 1:
+			mb = new MeshBuilderNew8();
+			break;
+
+		case 2:
+			mb = new MeshBuilderNew16();
+			break;
+
+		default:
+			std::cout << "Invalid input...\n\n";
+			std::cin.clear();
+			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+			input = -1;
+
+			break;
+		}
+	}
+
 	assert(Log::RestartGLLog());
 
 	Log::GLLog("started GLFW\n%s\n", glfwGetVersionString());
@@ -205,15 +241,16 @@ int main() {
 	}
 	stbi_image_free(data);
 	
-	MeshBuilder mb = MeshBuilder();
-	MeshBuilder16 mb16 = MeshBuilder16();
-	uint8_t flatchunk[CHUNK_SIZE* CHUNK_SIZE* CHUNK_SIZE];
+
+	//MeshBuilder* mb = new MeshBuilderNew8();
+
+	std::vector<uint8_t> flatchunk(mb->CHUNK_CUBED);
 
 	int faces = 0;
 
-	for (int i = 0; i < CHUNK_SIZE; i++) {
-		for (int j = 0; j < CHUNK_SIZE; j++) {
-			for (int k = 0; k < CHUNK_SIZE; k++) {
+	for (int i = 0; i < mb->CHUNK_SIZE; i++) {
+		for (int j = 0; j < mb->CHUNK_SIZE; j++) {
+			for (int k = 0; k < mb->CHUNK_SIZE; k++) {
 				//int val = std::rand() % 2;
 				//int val = 1;
 
@@ -221,13 +258,14 @@ int main() {
 
 				//if (!i || !j || !k) val = 1;
 				//if (i==7 || j==7 || k==7) val = 1;
-				// 
-				//int val = 0;
-				//if ((k + j + i) % 3 == 0) val = 1;
+				 
+				//int val = ((k + j + i) % 3 == 0) ? 1 : 0;
 
 				faces += val * 6;
 
-				flatchunk[mb.ConvertCoords(k, j, i)] = val;
+				flatchunk[mb->ConvertCoords(k, j, i)] = val;
+
+				//std::cout << mb16.ConvertCoords(k, j, i) << std::endl;
 			}
 
 			//std::cout << "\n";
@@ -240,23 +278,18 @@ int main() {
 	std::cout << "\n";
 	std::cout << faces<<" total faces in chunk\n";
 	std::cout << "\n";
-
+	
 	startTime = glfwGetTime();
-	std::vector<uint32_t> verts;
 
-	switch (CHUNK_SIZE) {
-	case 8:
-		mb.BuildMesh(flatchunk, verts);
-		break;
-	case 16:
-		mb16.BuildMesh(flatchunk, verts);
-		break;
-	}
+	std::vector<uint32_t> verts;
+	mb->BuildMesh(flatchunk.data(), verts);
 	
 	endTime = glfwGetTime();
 
 	std::cout << "Generated chunk mesh in " << (endTime - startTime) * 1000 << "ms\n";
+	std::cout << "Visible blocks " << mb->VisibleBlocks << "\n";
 	std::cout << verts.size() << "\n";
+
 
 	unsigned int eVBO, eVAO;
 	glGenVertexArrays(1, &eVAO);
@@ -304,14 +337,14 @@ int main() {
 	glm::mat4 view = glm::mat4(1.0f);
 	glm::mat4 projection = glm::mat4(1.0f);
 	//model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	view = glm::translate(view, glm::vec3(-8.0f, -5.0f, -20.0f));
+	//view = glm::translate(view, glm::vec3(-8.0f, -5.0f, -20.0f));
 	//view = glm::rotate(view, glm::radians(-10.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	//view = glm::rotate(view, glm::radians(20.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	//glEnable(GL_CULL_FACE);
-	//glCullFace(GL_BACK); // or GL_FRONT, depending on your winding order
+	//glCullFace(GL_FRONT);
 
 	float draw_distance = 100.0f;
 
@@ -336,17 +369,10 @@ int main() {
 
 	glClearColor(0.6f, 0.6f, 0.8f, 1.0f);
 
-	std::string chunkShader;
 
-	switch (CHUNK_SIZE) {
-	case 8:
-		chunkShader = "pQuad";
-		break;
+	const char* chunkShader = mb->SHADER->c_str();
 
-	case 16:
-		chunkShader = "chunk16";
-		break;
-	}
+	GLuint chunkProgram = Shaders::GetProgramId(chunkShader);
 
 	while (!glfwWindowShouldClose(window)) {
 		_update_fps_counter(window);
@@ -359,14 +385,14 @@ int main() {
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		Shaders::UseProgram(chunkShader);
+		Shaders::UseProgram(chunkProgram);
 
 		projection = glm::perspective(glm::radians(45.0f), (float)gl_width / (float)gl_height, 0.1f, draw_distance);
 		glm::mat4 view = camera.GetViewMatrix();
 		
-		glUniformMatrix4fv(Shaders::GetUniformLoc(chunkShader.c_str(), "modelMatrix"), 1, GL_FALSE, glm::value_ptr(model));
-		glUniformMatrix4fv(Shaders::GetUniformLoc(chunkShader.c_str(), "viewMatrix"), 1, GL_FALSE, &view[0][0]);
-		glUniformMatrix4fv(Shaders::GetUniformLoc(chunkShader.c_str(), "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projection));
+		glUniformMatrix4fv(Shaders::GetUniformLoc(chunkShader, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(model));
+		glUniformMatrix4fv(Shaders::GetUniformLoc(chunkShader, "viewMatrix"), 1, GL_FALSE, &view[0][0]);
+		glUniformMatrix4fv(Shaders::GetUniformLoc(chunkShader, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projection));
 
 		glBindTexture(GL_TEXTURE_2D, texture);
 

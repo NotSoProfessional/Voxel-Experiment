@@ -25,8 +25,6 @@ void main(void){
 
 	vec2 uv = gs_in[0].uv + vec2(1, 1);
 
-
-
 	switch (gs_in[0].face) {
 	case 0:
 	case 1:

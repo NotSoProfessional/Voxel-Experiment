@@ -189,15 +189,17 @@ void Shaders::CompileShaderFromPath(GLuint id, std::filesystem::path path) {
 void Shaders::UseProgram(std::string pName) {
     //Log::GLLog("using program \"%s\"\n", pName.c_str());
 
-    auto it = programs.find(pName);
+    glUseProgram(GetProgramId(pName));
+}
 
-    if (it != programs.end()) {
-        glUseProgram(it->second);
-    }
-    else {
-        //std::cout << "ERROR: Could not find program \"" << pName << "\"\n";
-        Log::GLLogErr("PROGRAM ERROR: could not find program \"%s\"\n", pName);
-    }
+void Shaders::UseProgram(char* pName) {
+    std::string pNameString(pName);
+
+    glUseProgram(GetProgramId(pNameString));
+}
+
+void Shaders::UseProgram(GLuint pId) {
+    glUseProgram(pId);
 }
 
 GLint Shaders::GetUniformLoc(const GLchar* name, const GLchar* uniform) {
@@ -221,6 +223,20 @@ GLint Shaders::GetUniformLoc(GLuint id, const GLchar* uniform) {
         uniformLocations[sID] = location;
 
         return location;
+    }
+}
+
+GLuint Shaders::GetProgramId(std::string pName) {
+    auto it = programs.find(pName);
+
+    if (it != programs.end()) {
+        return it->second;
+    }
+    else {
+        //std::cout << "ERROR: Could not find program \"" << pName << "\"\n";
+        Log::GLLogErr("PROGRAM ERROR: could not find program \"%s\"\n", pName);
+
+        return NULL;
     }
 }
 
