@@ -13,8 +13,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "fragment", "fragment", "{1BF54C0D-819E-4786-90E3-6EE01C2A39E2}"
 	ProjectSection(SolutionItems) = preProject
 		EngineExp\shaders\fragment\basicFrag.glsl = EngineExp\shaders\fragment\basicFrag.glsl
-		EngineExp\shaders\fragment\fragment.glsl = EngineExp\shaders\fragment\fragment.glsl
-		EngineExp\shaders\fragment\pfragment.glsl = EngineExp\shaders\fragment\pfragment.glsl
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "geometry", "geometry", "{EB6C14E8-B8B6-46AF-978A-1B5313EC50EF}"
@@ -24,12 +22,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "geometry", "geometry", "{EB
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "vertex", "vertex", "{25590FAA-8824-420D-BD99-FF6966136436}"
 	ProjectSection(SolutionItems) = preProject
+		EngineExp\shaders\vertex\chunk16.glsl = EngineExp\shaders\vertex\chunk16.glsl
 		EngineExp\shaders\vertex\pTest.glsl = EngineExp\shaders\vertex\pTest.glsl
-		EngineExp\shaders\vertex\pvertex.glsl = EngineExp\shaders\vertex\pvertex.glsl
-		EngineExp\shaders\vertex\pvertexshortverts.glsl = EngineExp\shaders\vertex\pvertexshortverts.glsl
-		EngineExp\shaders\vertex\test_not_shader.txt = EngineExp\shaders\vertex\test_not_shader.txt
-		EngineExp\shaders\vertex\test_unused.glsl = EngineExp\shaders\vertex\test_unused.glsl
-		EngineExp\shaders\vertex\vertex.glsl = EngineExp\shaders\vertex\vertex.glsl
 	EndProjectSection
 EndProject
 Global

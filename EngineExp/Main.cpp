@@ -281,8 +281,6 @@ int main() {
 	stbi_image_free(data);
 	
 
-	//MeshBuilder* mb = new MeshBuilderNew8();
-
 	std::vector<uint8_t> flatchunk(mb->CHUNK_CUBED);
 
 	int faces = 0;
@@ -306,11 +304,12 @@ int main() {
 					val = std::rand() % 2;
 					break;
 				}
-
 			
+				// For chunk type of most unique blocks possible
 				//if (!i || !j || !k) val = 1;
 				//if (i==7 || j==7 || k==7) val = 1;
 				 
+				// For chunk type for every third block
 				//int val = ((k + j + i) % 3 == 0) ? 1 : 0;
 
 				faces += val * 6;
@@ -355,8 +354,8 @@ int main() {
 	glEnableVertexAttribArray(0);
 	glBindVertexArray(0);
 
-
-	GLuint axisVAO, axisVBO;
+	// Old Axis object
+	/*GLuint axisVAO, axisVBO;
 	GLfloat axis[] = {
 		// X-axis
 		0.0f, 0.0f, 0.0f,
@@ -383,15 +382,11 @@ int main() {
 	glEnableVertexAttribArray(0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
+	glBindVertexArray(0);*/
 
-	glm::mat4 model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+	glm::mat4 model = glm::mat4(1.0f);
 	glm::mat4 view = glm::mat4(1.0f);
 	glm::mat4 projection = glm::mat4(1.0f);
-	//model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	//view = glm::translate(view, glm::vec3(-8.0f, -5.0f, -20.0f));
-	//view = glm::rotate(view, glm::radians(-10.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	//view = glm::rotate(view, glm::radians(20.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 

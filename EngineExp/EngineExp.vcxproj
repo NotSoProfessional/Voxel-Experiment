@@ -142,7 +142,6 @@
     <ClCompile Include="include\glad\src\glad.c" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="MeshBuilder8.cpp" />
     <ClCompile Include="MeshBuilderNew16.cpp" />
     <ClCompile Include="MeshBuilderNew8.cpp" />
     <ClCompile Include="Shaders.cpp" />
@@ -151,8 +150,6 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="MeshBuilder.h" />
-    <ClInclude Include="MeshBuilder8.h" />
-    <ClInclude Include="MeshBuilder16.h" />
     <ClInclude Include="MeshBuilderNew16.h" />
     <ClInclude Include="MeshBuilderNew8.h" />
     <ClInclude Include="Shaders.h" />

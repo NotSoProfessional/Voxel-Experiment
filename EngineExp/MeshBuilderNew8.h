@@ -8,7 +8,7 @@ public:
 	using VERT_TYPE = uint32_t;
 
 	static const uint32_t CHUNK_SIZE = 8;
-	const std::string SHADER = "pQuad";
+	const std::string SHADER = "chunk8";
 
 	int VisibleBlocks = 0;
 
