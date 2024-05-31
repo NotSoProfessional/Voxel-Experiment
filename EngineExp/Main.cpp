@@ -26,8 +26,6 @@
 #include "MeshBuilderNew8.h"
 #include "MeshBuilderNew16.h"
 
-#include <math.h>
-
 #define GL_GPU_MEM_INFO_TOTAL_AVAILABLE_MEM_NVX 0x9048
 #define GL_GPU_MEM_INFO_CURRENT_AVAILABLE_MEM_NVX 0x9049
 
@@ -36,6 +34,11 @@ static int gl_height = 960;
 
 MeshBuilder* mb;
 
+enum ChunkType {
+	ALL,
+	EVERY_OTHER,
+	RANDOM
+};
 
 void error_callback(int error, const char* description) {
 	//fprintf(stderr, "Error: %s\n", description);
@@ -129,6 +132,42 @@ int main() {
 
 		case 2:
 			mb = new MeshBuilderNew16();
+			break;
+
+		default:
+			std::cout << "Invalid input...\n\n";
+			std::cin.clear();
+			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+			input = -1;
+
+			break;
+		}
+	}
+
+	ChunkType chunkType;
+
+	std::cout << "Select chunk type:\n";
+	std::cout << "1) All (Best Case)\n";
+	std::cout << "2) Every Other (Worst Case)\n";
+	std::cout << "3) Random\n\n";
+
+	input = -1;
+
+	while (input == -1) {
+		std::cin >> input;
+
+		switch (input) {
+		case 1:
+			chunkType = ALL;
+			break;
+
+		case 2:
+			chunkType = EVERY_OTHER;
+			break;
+
+		case 3:
+			chunkType = RANDOM;
 			break;
 
 		default:
@@ -251,11 +290,24 @@ int main() {
 	for (int i = 0; i < mb->CHUNK_SIZE; i++) {
 		for (int j = 0; j < mb->CHUNK_SIZE; j++) {
 			for (int k = 0; k < mb->CHUNK_SIZE; k++) {
-				//int val = std::rand() % 2;
-				//int val = 1;
 
-				int val = ((k + j + i) % 2 == 0) ? 1 : 0;
+				int val;
 
+				switch (chunkType) {
+				case ALL:
+					val = 1;
+					break;
+
+				case EVERY_OTHER:
+					val = ((k + j + i) % 2 == 0) ? 1 : 0;
+					break;
+
+				case RANDOM:
+					val = std::rand() % 2;
+					break;
+				}
+
+			
 				//if (!i || !j || !k) val = 1;
 				//if (i==7 || j==7 || k==7) val = 1;
 				 
