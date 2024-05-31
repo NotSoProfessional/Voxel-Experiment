@@ -361,3 +361,11 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/EngineExp/shaders/fragment/basicFrag.glsl
+/EngineExp/shaders/fragment/fragment.glsl
+/EngineExp/shaders/fragment/pfragment.glsl
+/EngineExp/shaders/vertex/pvertex.glsl
+/EngineExp/shaders/vertex/pvertexshortverts.glsl
+/EngineExp/shaders/vertex/test_not_shader.txt
+/EngineExp/shaders/vertex/test_unused.glsl
+/EngineExp/shaders/vertex/vertex.glsl
