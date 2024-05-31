@@ -253,8 +253,8 @@ int main() {
 	//std::cout << "Loaded, compiled, and linked shaders in " << (endTime - startTime)*1000 << " miliseconds" << '\n';
 	Log::GLLog("Loaded, compiled, and linked shaders in %f miliseconds\n", (endTime - startTime) * 1000);
 
-	Shaders::ListShaders();
-	Shaders::ListPrograms();
+	//Shaders::ListShaders();
+	//Shaders::ListPrograms();
 
 	unsigned int texture;
 	glGenTextures(1, &texture);
@@ -327,7 +327,6 @@ int main() {
 
 
 	std::cout << "\n";
-	std::cout << faces<<" total faces in chunk\n";
 	std::cout << "\n";
 	
 	startTime = glfwGetTime();
@@ -337,9 +336,17 @@ int main() {
 	
 	endTime = glfwGetTime();
 
+	double reduction = 100 - (((float) verts.size() / faces) * 100.f);
+	float size = (4 * verts.size()) / 1024.f;
+
 	std::cout << "Generated chunk mesh in " << (endTime - startTime) * 1000 << "ms\n";
 	std::cout << "Visible blocks " << mb->VisibleBlocks << "\n";
-	std::cout << verts.size() << "\n";
+	std::cout << "No. faces in chunk " << faces << "\n";
+	std::cout << "No. of points " << verts.size() << "\n";
+
+	//std::setprecision(1);
+	std::cout << "Reduction from culling and meshing " << reduction << "%\n";
+	std::cout << "Chunk size in buffer: " << size << "KB\n\n";
 
 
 	unsigned int eVBO, eVAO;

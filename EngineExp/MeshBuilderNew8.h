@@ -10,7 +10,7 @@ public:
 	static const uint32_t CHUNK_SIZE = 8;
 	const std::string SHADER = "chunk8";
 
-	int VisibleBlocks = 0;
+	//int VisibleBlocks = 0;
 
 	MeshBuilderNew8() : MeshBuilder(CHUNK_SIZE, &SHADER) {}
 

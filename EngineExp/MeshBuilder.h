@@ -13,7 +13,7 @@ public:
 
     const std::string* SHADER;
 
-    int VisibleBlocks;
+    int VisibleBlocks = 0;
 
     MeshBuilder(uint16_t size, const std::string* shader) : CHUNK_SIZE(size), CHUNK_SQUARED(size* size), CHUNK_CUBED(size* size* size),
         SHADER(shader){}
