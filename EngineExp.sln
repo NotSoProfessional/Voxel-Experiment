@@ -23,6 +23,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "vertex", "vertex", "{25590FAA-8824-420D-BD99-FF6966136436}"
 	ProjectSection(SolutionItems) = preProject
 		EngineExp\shaders\vertex\chunk16.glsl = EngineExp\shaders\vertex\chunk16.glsl
+		EngineExp\shaders\vertex\chunk32.glsl = EngineExp\shaders\vertex\chunk32.glsl
 		EngineExp\shaders\vertex\pTest.glsl = EngineExp\shaders\vertex\pTest.glsl
 	EndProjectSection
 EndProject

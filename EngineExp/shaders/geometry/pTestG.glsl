@@ -27,6 +27,30 @@ void main(void){
 
 	switch (gs_in[0].face) {
 	case 0:
+		vertexPos = vec4(0, 0, 0, 0) + pointPos;
+		gl_Position = projectionMatrix * viewMatrix * modelMatrix * vertexPos;
+		texCoord = vec2(0, 0) * uv;
+		EmitVertex();
+
+		vertexPos = vec4(pointPos.x, pointPos.y - uv.y, pointPos.z, 1);
+		gl_Position = projectionMatrix * viewMatrix * modelMatrix * vertexPos;
+		texCoord = vec2(0, 1) * uv;
+		EmitVertex();
+
+		vertexPos = vec4(pointPos.x - uv.x, pointPos.y, pointPos.z, 1);
+		gl_Position = projectionMatrix * viewMatrix * modelMatrix * vertexPos;
+		texCoord = vec2(1, 0) * uv;
+		EmitVertex();
+
+		vertexPos = vec4(pointPos.x - uv.x, pointPos.y - uv.y, pointPos.z, 1);
+		gl_Position = projectionMatrix * viewMatrix * modelMatrix * vertexPos;
+		texCoord = vec2(1, 1) * uv;
+		EmitVertex();
+
+		EndPrimitive();
+
+		break;
+
 	case 1:
 		vertexPos = vec4(0, 0, 0, 0) + pointPos;
 		gl_Position = projectionMatrix * viewMatrix * modelMatrix * vertexPos;
@@ -53,6 +77,30 @@ void main(void){
 		break;
 
 	case 2:
+		vertexPos = vec4(0, 0, 0, 0) + pointPos;
+		gl_Position = projectionMatrix * viewMatrix * modelMatrix * vertexPos;
+		texCoord = vec2(0, 0) * uv;
+		EmitVertex();
+
+		vertexPos = vec4(pointPos.x, pointPos.y, pointPos.z - uv.y, 1);
+		gl_Position = projectionMatrix * viewMatrix * modelMatrix * vertexPos;
+		texCoord = vec2(0, 1) * uv;
+		EmitVertex();
+
+		vertexPos = vec4(pointPos.x - uv.x, pointPos.y, pointPos.z, 1);
+		gl_Position = projectionMatrix * viewMatrix * modelMatrix * vertexPos;
+		texCoord = vec2(1, 0) * uv;
+		EmitVertex();
+
+		vertexPos = vec4(pointPos.x - uv.x, pointPos.y, pointPos.z - uv.y, 1);
+		gl_Position = projectionMatrix * viewMatrix * modelMatrix * vertexPos;
+		texCoord = vec2(1, 1) * uv;
+		EmitVertex();
+
+		EndPrimitive();
+
+		break;
+
 	case 3:
 		vertexPos = vec4(0, 0, 0, 0) + pointPos;
 		gl_Position = projectionMatrix * viewMatrix * modelMatrix * vertexPos;
@@ -79,6 +127,30 @@ void main(void){
 		break;
 
 	case 4:
+		vertexPos = vec4(0, 0, 0, 0) + pointPos;
+		gl_Position = projectionMatrix * viewMatrix * modelMatrix * vertexPos;
+		texCoord = vec2(0, 0) * uv;
+		EmitVertex();
+
+		vertexPos = vec4(pointPos.x, pointPos.y - uv.y, pointPos.z, 1);
+		gl_Position = projectionMatrix * viewMatrix * modelMatrix * vertexPos;
+		texCoord = vec2(0, 1) * uv;
+		EmitVertex();
+
+		vertexPos = vec4(pointPos.x, pointPos.y, pointPos.z - uv.x, 1);
+		gl_Position = projectionMatrix * viewMatrix * modelMatrix * vertexPos;
+		texCoord = vec2(1, 0) * uv;
+		EmitVertex();
+
+		vertexPos = vec4(pointPos.x, pointPos.y - uv.y, pointPos.z - uv.x, 1);
+		gl_Position = projectionMatrix * viewMatrix * modelMatrix * vertexPos;
+		texCoord = vec2(1, 1) * uv;
+		EmitVertex();
+
+		EndPrimitive();
+
+		break;
+
 	case 5:
 		vertexPos = vec4(0, 0, 0, 0) + pointPos;
 		gl_Position = projectionMatrix * viewMatrix * modelMatrix * vertexPos;

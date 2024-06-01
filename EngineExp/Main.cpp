@@ -25,6 +25,7 @@
 #include "MeshBuilder.h"
 #include "MeshBuilderNew8.h"
 #include "MeshBuilderNew16.h"
+#include "MeshBuilderNew32.h"
 
 #define GL_GPU_MEM_INFO_TOTAL_AVAILABLE_MEM_NVX 0x9048
 #define GL_GPU_MEM_INFO_CURRENT_AVAILABLE_MEM_NVX 0x9049
@@ -120,7 +121,8 @@ int main() {
 
 	std::cout << "Select chunk size:\n";
 	std::cout << "1) 8x8x8\n";
-	std::cout << "2) 16x16x16\n\n";
+	std::cout << "2) 16x16x16\n";
+	std::cout << "3) 32x32x32\n\n";
 
 	while (input == -1) {
 		std::cin >> input;
@@ -132,6 +134,10 @@ int main() {
 
 		case 2:
 			mb = new MeshBuilderNew16();
+			break;
+
+		case 3:
+			mb = new MeshBuilderNew32();
 			break;
 
 		default:
@@ -285,6 +291,8 @@ int main() {
 
 	int faces = 0;
 
+	std::srand(std::time(nullptr));
+
 	for (int i = 0; i < mb->CHUNK_SIZE; i++) {
 		for (int j = 0; j < mb->CHUNK_SIZE; j++) {
 			for (int k = 0; k < mb->CHUNK_SIZE; k++) {
@@ -298,10 +306,12 @@ int main() {
 
 				case EVERY_OTHER:
 					val = ((k + j + i) % 2 == 0) ? 1 : 0;
+
 					break;
 
 				case RANDOM:
 					val = std::rand() % 2;
+					//if (std::rand() % 2) val = 1;
 					break;
 				}
 			
@@ -337,7 +347,7 @@ int main() {
 	endTime = glfwGetTime();
 
 	double reduction = 100 - (((float) verts.size() / faces) * 100.f);
-	float size = (4 * verts.size()) / 1024.f;
+	double size = (4 * verts.size()) / 1024.f;
 
 	std::cout << "Generated chunk mesh in " << (endTime - startTime) * 1000 << "ms\n";
 	std::cout << "Visible blocks " << mb->VisibleBlocks << "\n";
@@ -428,6 +438,18 @@ int main() {
 
 	GLuint chunkProgram = Shaders::GetProgramId(chunkShader);
 
+	GLint modelLoc = Shaders::GetUniformLoc(chunkShader, "modelMatrix");
+	GLint viewLoc = Shaders::GetUniformLoc(chunkShader, "viewMatrix");
+	GLint projectionLoc = Shaders::GetUniformLoc(chunkShader, "projectionMatrix");
+
+	GLint chunkLocationLoc = Shaders::GetUniformLoc(chunkShader, "chunkLocation");
+
+	uint32_t nbOfChunks = 2;
+	glm::vec3 chunkLocation(0);
+
+	std::cout << "" << typeid(*mb).name() << "\n";
+	std::cout << "" << typeid(MeshBuilderNew16).name() << "\n";
+
 	while (!glfwWindowShouldClose(window)) {
 		_update_fps_counter(window);
 
@@ -444,14 +466,34 @@ int main() {
 		projection = glm::perspective(glm::radians(45.0f), (float)gl_width / (float)gl_height, 0.1f, draw_distance);
 		glm::mat4 view = camera.GetViewMatrix();
 		
-		glUniformMatrix4fv(Shaders::GetUniformLoc(chunkShader, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(model));
-		glUniformMatrix4fv(Shaders::GetUniformLoc(chunkShader, "viewMatrix"), 1, GL_FALSE, &view[0][0]);
-		glUniformMatrix4fv(Shaders::GetUniformLoc(chunkShader, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projection));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
+		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glBindTexture(GL_TEXTURE_2D, texture);
 
 		glBindVertexArray(eVAO);
-		glDrawArrays(GL_POINTS, 0, verts.size());
+
+		if (typeid(*mb) == typeid(MeshBuilderNew32) || typeid(*mb) == typeid(MeshBuilderNew16)) {
+			for (int x = 0; x < nbOfChunks; x++) {
+				for (int y = 0; y < 24; y++) {
+					for (int z = 0; z < nbOfChunks; z++) {
+						chunkLocation.x = x;
+						chunkLocation.y = y;
+						chunkLocation.z = z;
+
+						//std::cout << chunkLocation.x << " " << chunkLocation.y << " " << chunkLocation.z << std::endl;
+						glUniform3fv(chunkLocationLoc, 1, glm::value_ptr(chunkLocation));
+
+						glDrawArrays(GL_POINTS, 0, verts.size());
+					}
+				}
+			}
+		}
+		else {
+			glDrawArrays(GL_POINTS, 0, verts.size());
+		}
+
 
 		glBindVertexArray(0);
 		glUseProgram(0);
@@ -468,8 +510,11 @@ int main() {
 
 		if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F5)) draw_distance--;
 		if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F6)) draw_distance++;
-		//if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F7)) CHUNK_SIZE = 32;
-		//if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F8)) CHUNK_SIZE = 64;
+		if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F7)) glEnable(GL_CULL_FACE);
+		if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F8)) glDisable(GL_CULL_FACE);
+
+		if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+			deltaTime += .3f;
 
 		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 			camera.ProcessKeyboard(FORWARD, deltaTime);

@@ -2,11 +2,11 @@
 
 uniform vec3 chunkLocation;
 
-layout (location = 0) in mediump int aVertData;
+layout(location = 0) in mediump int aVertData;
 
 in vec3 position;
 
-out VS_OUT {
+out VS_OUT{
 	vec2 uv;
 	int face;
 } vs_out;
@@ -14,13 +14,13 @@ out VS_OUT {
 void main(void) {
 	vec3 pos;
 
-	pos.z = float((aVertData >> 8) & 0xF);
-	pos.y = float((aVertData >> 12) & 0xF);
-	pos.x = float((aVertData >> 16) & 0xF);
-	vs_out.uv.x = float((aVertData >> 4) & 0xF);
-	vs_out.uv.y = float((aVertData) & 0xF);
+	pos.z = float((aVertData >> 10) & 0x1F);
+	pos.y = float((aVertData >> 15) & 0x1F);
+	pos.x = float((aVertData >> 20) & 0x1F);
+	vs_out.uv.x = float((aVertData >> 5) & 0x1F);
+	vs_out.uv.y = float((aVertData) & 0x1F);
 
-	int face = int((aVertData >> 20) & 0x7);
+	int face = int((aVertData >> 25) & 0xF);
 	vs_out.face = face;
 
 	switch (face) {
@@ -31,7 +31,7 @@ void main(void) {
 
 	case 2:
 		pos.y = pos.y;
-		pos.z = pos.z +1;
+		pos.z = pos.z + 1;
 
 		break;
 
@@ -47,13 +47,13 @@ void main(void) {
 		break;
 
 	case 5:
-		pos.x = pos.x-1;
+		pos.x = pos.x - 1;
 		pos.z = pos.z + 1;
 
 		break;
 	}
 
-	pos = pos + ((chunkLocation)*16);
+	pos = pos + ((chunkLocation) * 32);
 
 	gl_Position = vec4(pos, 1.0);
 }

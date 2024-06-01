@@ -1,62 +1,62 @@
-#include "MeshBuilderNew16.h"
+#include "MeshBuilderNew32.h"
 
 
 //
 // Define Structs
 //
 
-struct MeshBuilderNew16::MeshSize {
-	uint16_t uv = 0x21;
+struct MeshBuilderNew32::MeshSize {
+	uint16_t uv = 0x41;
 
 	uint16_t GetU() {
-		return uv & 0x1F;
+		return uv & 0x3F;
 	}
 
 	void SetU(uint16_t u) {
-		uv = uv & 0x3E0;
+		uv = uv & 0xFC0;
 		uv |= u;
 	}
 
 	uint16_t GetV() {
-		return (uv & 0x3E0) >> 5;
+		return (uv & 0xFC0) >> 6;
 	}
 
 	void SetV(uint16_t v) {
-		v = v << 5;
-		uv = v |= (uv & 0x1F);
+		v = v << 6;
+		uv = v |= (uv & 0x3F);
 	}
 };
 
-struct MeshBuilderNew16::LocalPoint {
+struct MeshBuilderNew32::LocalPoint {
 	uint32_t data = 0;
 
 	void SetFace(uint32_t face) {
-		face = face << 20;
-		data = face |= (data & 0xFF8FFFFF);
+		face = face << 25;
+		data = face |= (data & 0xF1FFFFFF);
 	}
 
 	void SetX(uint32_t x) {
-		x = x << 16;
-		data = x |= (data & 0xFFF0FFFF);
+		x = x << 20;
+		data = x |= (data & 0xFE0FFFFF);
 	}
 
 	void SetY(uint32_t y) {
-		y = y << 12;
-		data = y |= (data & 0xFFFF0FFF);
+		y = y << 15;
+		data = y |= (data & 0xFFF07FFF);
 	}
 
 	void SetZ(uint32_t z) {
-		z = z << 8;
-		data = z |= (data & 0xFFFFF0FF);
+		z = z << 10;
+		data = z |= (data & 0xFFFF83FF);
 	}
 
 	void SetU(uint32_t u) {
-		u = u << 4;
-		data = u |= (data & 0xFFFFFF0F);
+		u = u << 5;
+		data = u |= (data & 0xFFFFFC1F);
 	}
 
 	void SetV(uint32_t v) {
-		data = v |= (data & 0xFFFFFFF0);
+		data = v |= (data & 0xFFFFFFE0);
 	}
 
 	void SetAll(uint32_t x, uint32_t y, uint32_t z, uint32_t u, uint32_t v, uint32_t face) {
@@ -75,10 +75,10 @@ struct MeshBuilderNew16::LocalPoint {
 // Define methods
 //
 
-void MeshBuilderNew16::BuildMesh(const uint8_t chunk[], std::vector<VERT_TYPE>& verts) {
+void MeshBuilderNew32::BuildMesh(const uint8_t chunk[], std::vector<VERT_TYPE>& verts) {
 	VisibleBlocks = 0;
 
-    uint8_t* faces = FindVisibleFaces(chunk);
+	uint8_t* faces = FindVisibleFaces(chunk);
 	MeshSize* meshedFaces = new MeshSize[CHUNK_CUBED](MeshSize());
 
 	for (Face face = BACK; face < RIGHT + 1; face = static_cast<Face>(face << 1)) {
@@ -90,7 +90,7 @@ void MeshBuilderNew16::BuildMesh(const uint8_t chunk[], std::vector<VERT_TYPE>& 
 	delete[] faces;
 }
 
-uint8_t* MeshBuilderNew16::FindVisibleFaces(const uint8_t chunk[]) {
+uint8_t* MeshBuilderNew32::FindVisibleFaces(const uint8_t chunk[]) {
 	uint8_t* faces = new uint8_t[CHUNK_CUBED]();
 
 	for (int y = 0; y < CHUNK_SIZE; y++) {
@@ -135,7 +135,7 @@ uint8_t* MeshBuilderNew16::FindVisibleFaces(const uint8_t chunk[]) {
 	return faces;
 }
 
-void MeshBuilderNew16::GreedyMesh(uint8_t* faces, Face face, MeshSize* meshSizes) {
+void MeshBuilderNew32::GreedyMesh(uint8_t* faces, Face face, MeshSize* meshSizes) {
 	std::fill(meshSizes, meshSizes + CHUNK_CUBED, MeshSize());
 
 	uint8_t i, j, k;
@@ -222,7 +222,7 @@ void MeshBuilderNew16::GreedyMesh(uint8_t* faces, Face face, MeshSize* meshSizes
 	}
 }
 
-void MeshBuilderNew16::GenerateGSInput(MeshSize* meshedFaces, Face face, std::vector<uint32_t>& points) {
+void MeshBuilderNew32::GenerateGSInput(MeshSize* meshedFaces, Face face, std::vector<uint32_t>& points) {
 	uint32_t faceShaderVal = 0;
 
 	switch (face) {
