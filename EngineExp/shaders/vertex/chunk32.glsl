@@ -4,6 +4,7 @@ uniform vec3 chunkLocation;
 
 layout(location = 0) in mediump int aVertData;
 
+
 in vec3 position;
 
 out VS_OUT{

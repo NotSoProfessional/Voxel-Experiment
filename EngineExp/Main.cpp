@@ -10,22 +10,22 @@
 #include <fstream>
 #include <cassert>
 #include <filesystem>
+#include <FastSIMD/FastSIMD.h>
 #include "Shaders.h"
 #include "Log.h"
+#include "Chunk.h"
+#include "WorldManager.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #include "Camera.h"
-#include <unordered_set>
-#include <set>
-#include <map>
-#include <queue>
-#include "MeshBuilder8.h"
-#include "MeshBuilder16.h"
+#include <unordered_map>
+#include <locale>
 #include "MeshBuilder.h"
 #include "MeshBuilderNew8.h"
 #include "MeshBuilderNew16.h"
 #include "MeshBuilderNew32.h"
+#include <thread>
 
 #define GL_GPU_MEM_INFO_TOTAL_AVAILABLE_MEM_NVX 0x9048
 #define GL_GPU_MEM_INFO_CURRENT_AVAILABLE_MEM_NVX 0x9049
@@ -108,6 +108,7 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 	camera.ProcessMouseMovement(xoffset, yoffset);
 }
 
+
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called
 // ----------------------------------------------------------------------
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
@@ -115,8 +116,36 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 	camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
 
+void CreateMesh(int startChunk, int endChunk, WorldManager& world) {
+	MeshBuilder* mb = new MeshBuilderNew32();
+
+	for (int i = startChunk; i < endChunk; i++) {
+		int chunkIndex = i;
+		int X = i % world.wSize;                          // Calculate the x coordinate
+		int Z = (i / world.wSize) % world.wSize;                // Calculate the z coordinate
+		int Y = (i / (world.wSize * world.wSize)) % world.wHeight;     // Calculate the y coordinate
+		Y -= world.wHeight / 2;
+
+		Chunk* chunk = world.chunks[Utils::vec3(X, Y, Z)];
+
+		mb->BuildMesh(chunk, &world, chunk->GetMeshPoints());
+		//chunk->AddToBuffer();
+		//std::cout << "Done chunk " << i << std::endl;;
+	}
+
+	delete mb;
+}
+
 int main() {
-	
+	std::setlocale(LC_ALL, "en_US.UTF-8");
+
+	if (FastSIMD::CPUMaxSIMDLevel() & FastSIMD::Level_AVX2 & FastSIMD::CPUMaxSIMDLevel() & FastNoise::SUPPORTED_SIMD_LEVELS & FastSIMD::COMPILED_SIMD_LEVELS) {
+		std::cout << "AVX2 is supported!" << std::endl;
+	}
+	else {
+		std::cout << "AVX2 is NOT supported!" << std::endl;
+	}
+
 	int input = -1;
 
 	std::cout << "Select chunk size:\n";
@@ -124,32 +153,38 @@ int main() {
 	std::cout << "2) 16x16x16\n";
 	std::cout << "3) 32x32x32\n\n";
 
+	WorldManager* world = nullptr;
+
 	while (input == -1) {
 		std::cin >> input;
 
 		switch (input) {
 		case 1:
-			mb = new MeshBuilderNew8();
+			//mb = new MeshBuilderNew8();
 			break;
 
 		case 2:
 			mb = new MeshBuilderNew16();
+			world = new WorldManager(16);
 			break;
 
 		case 3:
+			std::cout << "Generating chunks...\n\n";
 			mb = new MeshBuilderNew32();
+			world = new WorldManager(32);
 			break;
 
 		default:
 			std::cout << "Invalid input...\n\n";
 			std::cin.clear();
-			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+			//std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
 			input = -1;
 
 			break;
 		}
 	}
+
 
 	ChunkType chunkType;
 
@@ -179,7 +214,7 @@ int main() {
 		default:
 			std::cout << "Invalid input...\n\n";
 			std::cin.clear();
-			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+			//std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
 			input = -1;
 
@@ -287,6 +322,111 @@ int main() {
 	stbi_image_free(data);
 	
 
+	std::cout << "\n";
+	std::cout << "\n";
+
+	Chunk* chunk = nullptr;
+	double sizen = 0;
+	int vb = 0;
+	int bCnt = 0;
+	int faceCnt = 0;
+	int pointCnt = 0;
+	//std::vector<uint32_t>* points;
+	//std::srand(std::time(nullptr));
+
+	std::cout << "Generating meshes...\n\n";
+	std::vector<Utils::vec3> chunkLocsToRemove;
+	std::cout << world->chunks.size() << "\n";
+
+	int chunksProcessed = 0;
+	float totalChunks = world->chunks.size();
+
+	const int numThreads = std::thread::hardware_concurrency();
+
+	int groupSize = totalChunks / numThreads;
+
+	std::cout << numThreads << " Group Size: " << groupSize << "\n";
+
+	std::vector<std::thread> threads;
+
+	//genChunkss(0, 48, noiseOutput);
+	std::cout << std::endl;
+	for (int i = 0; i < totalChunks; i += groupSize) {
+		threads.emplace_back(&CreateMesh, (int)i, (int)(i + groupSize), std::ref(*world));
+	}
+
+	for (int i = 0; i < threads.size(); i++) {
+		threads[i].join();
+	}
+
+	/*for (const auto chunkIt : world->chunks) {
+		if (chunkIt.second != nullptr) {
+			chunk = chunkIt.second;
+
+			startTime = glfwGetTime();
+			mb->BuildMesh(chunk, world, chunk->GetMeshPoints());
+
+			endTime = glfwGetTime();
+			chunk->AddToBuffer();
+			vb += mb->VisibleBlocks;
+			bCnt += chunk->blockCnt;
+			pointCnt += chunk->GetMeshPoints().size();
+
+			if (chunk->GetMeshPoints().size() == 0) {
+				//world->chunks.erase(chunk->CHUNK_LOCATION);
+				chunkLocsToRemove.push_back(chunk->CHUNK_LOCATION);
+			}
+
+			sizen += (4 * chunk->GetMeshPoints().size()) / 1024.f / 1024.f;
+
+			chunksProcessed++;
+			if (chunksProcessed % 250 == 0) Utils::PrintProgress(chunksProcessed / totalChunks);
+		}
+	}*/
+
+	std::cout << "Removing empty meshes...\n\n";
+
+
+
+	//world->chunks.erase_if()
+	/*for (const auto chunkIt : world->chunks) {
+		if (chunkIt.second != nullptr) {
+			std::cout << chunk->CHUNK_LOCATION.x << ", " << chunk->CHUNK_LOCATION.y << ", " << chunk->CHUNK_LOCATION.z << "\n";
+			std::cout << chunk->GetMeshPoints().size() << "\n\n";
+
+			if (chunk->GetMeshPoints().size() == 0) {
+				chunkLocsToRemove.push_back(chunk->CHUNK_LOCATION);
+			}
+		}
+	}*/
+
+	for (const auto loc : chunkLocsToRemove) {
+		world->chunks.erase(loc);
+	}
+
+	std::cout << world->chunks.size() << "\n";
+
+	for (const auto chunkIt : world->chunks) {
+		Chunk* chunk = chunkIt.second;
+		if (chunk->GetMeshPoints().size() > 0) {
+			chunk->AddToBuffer();
+			world->chunksVector.emplace_back(chunk);
+		}
+	}
+
+	std::cout << world->chunksVector.size() << "\n";
+
+	faceCnt = bCnt * 6;
+	double reduction = 100 - (((float)pointCnt / faceCnt) * 100.f);
+
+	std::cout << "Generated chunk mesh in " << (endTime - startTime) * 1000 << "ms\n";
+	std::cout << "Visible blocks " << vb << "\n";
+	std::cout << "No. of points " << pointCnt << "\n";
+	std::cout << "Reduction from culling and meshing " << reduction << "%\n";
+	std::cout << "Chunk size in buffer: " << sizen << "MB\n";
+	std::cout << "Average chunk size in buffer: " << sizen/world->chunks.size()*1024 << "KB\n\n";
+
+
 	std::vector<uint8_t> flatchunk(mb->CHUNK_CUBED);
 
 	int faces = 0;
@@ -346,7 +486,7 @@ int main() {
 	
 	endTime = glfwGetTime();
 
-	double reduction = 100 - (((float) verts.size() / faces) * 100.f);
+	reduction = 100 - (((float) verts.size() / faces) * 100.f);
 	double size = (4 * verts.size()) / 1024.f;
 
 	std::cout << "Generated chunk mesh in " << (endTime - startTime) * 1000 << "ms\n";
@@ -363,8 +503,8 @@ int main() {
 	glGenVertexArrays(1, &eVAO);
 	glGenBuffers(1, &eVBO);
 
-	glBindBuffer(GL_ARRAY_BUFFER, eVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(uint32_t)*verts.size(), verts.data(), GL_STATIC_DRAW);
+	//glBindBuffer(GL_ARRAY_BUFFER, eVBO);
+	//glBufferData(GL_ARRAY_BUFFER, sizeof(uint32_t)*vertsn.size(), vertsn.data(), GL_STATIC_DRAW);
 	
 	glBindVertexArray(eVAO);
 	glVertexAttribIPointer(0, 1, GL_UNSIGNED_INT, 0, (void*)0);
@@ -410,7 +550,7 @@ int main() {
 	//glEnable(GL_CULL_FACE);
 	//glCullFace(GL_FRONT);
 
-	float draw_distance = 100.0f;
+	float draw_distance = 600.0f;
 
 	GLfloat tgPoint[] = {
 		0.0f, 0.0f, 0.0f
@@ -447,8 +587,23 @@ int main() {
 	uint32_t nbOfChunks = 2;
 	glm::vec3 chunkLocation(0);
 
-	std::cout << "" << typeid(*mb).name() << "\n";
-	std::cout << "" << typeid(MeshBuilderNew16).name() << "\n";
+	//std::cout << "" << typeid(*mb).name() << "\n";
+	//std::cout << "" << typeid(MeshBuilderNew16).name() << "\n";
+
+	bool useVector = true;
+
+
+	std::vector<float> chunkLocations;
+	for (const auto& chunk : world->chunksVector) {
+		chunkLocations.push_back(chunk->CHUNK_LOCATION.x);
+		chunkLocations.push_back(chunk->CHUNK_LOCATION.y);
+		chunkLocations.push_back(chunk->CHUNK_LOCATION.z);
+	}
+
+	GLuint chunkLocationBuffer;
+	glGenBuffers(1, &chunkLocationBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, chunkLocationBuffer);
+	glBufferData(GL_ARRAY_BUFFER, chunkLocations.size() * sizeof(float), chunkLocations.data(), GL_STATIC_DRAW);
 
 	while (!glfwWindowShouldClose(window)) {
 		_update_fps_counter(window);
@@ -472,9 +627,9 @@ int main() {
 
 		glBindTexture(GL_TEXTURE_2D, texture);
 
-		glBindVertexArray(eVAO);
+		//glBindVertexArray(eVAO);
 
-		if (typeid(*mb) == typeid(MeshBuilderNew32) || typeid(*mb) == typeid(MeshBuilderNew16)) {
+		/*if (typeid(*mb) == typeid(MeshBuilderNew32) || typeid(*mb) == typeid(MeshBuilderNew16)) {
 			for (int x = 0; x < nbOfChunks; x++) {
 				for (int y = 0; y < 24; y++) {
 					for (int z = 0; z < nbOfChunks; z++) {
@@ -492,8 +647,42 @@ int main() {
 		}
 		else {
 			glDrawArrays(GL_POINTS, 0, verts.size());
-		}
+		}*/
 
+		/*for (auto chunk : world->chunks) {
+			chunkLocation.x = chunk.first.x;
+			chunkLocation.y = chunk.first.y;
+			chunkLocation.z = chunk.first.z;
+
+			glUniform3fv(chunkLocationLoc, 1, glm::value_ptr(chunkLocation));
+
+			glDrawArrays(GL_POINTS, 0, verts.size());
+		}*/
+		if (!useVector) {
+			for (const auto chunkIt : world->chunks) {
+				if (chunkIt.second != nullptr) {
+					Chunk* chunk = chunkIt.second;
+					//std::vector<uint32_t> points = chunk->GetMeshPoints();
+					//float coords[] = { chunk->CHUNK_LOCATION.x,chunk->CHUNK_LOCATION.y, chunk->CHUNK_LOCATION.z };
+					//float coords[] = { 0.f,0.f, 0.f };
+					//chunkLocation.x = chunk->CHUNK_LOCATION.x;
+					//chunkLocation.y = chunk->CHUNK_LOCATION.y;
+					//chunkLocation.z = chunk->CHUNK_LOCATION.z;
+						//glBindVertexArray(chunk->VAO);
+
+					glUniform3fv(chunkLocationLoc, 1, chunk->CHUNK_LOCATION.coords);
+					chunk->Draw();
+				}
+			}
+		}
+		else {
+			for (const auto chunk : world->chunksVector) {
+					float coords[] = { chunk->CHUNK_LOCATION.x,chunk->CHUNK_LOCATION.y, chunk->CHUNK_LOCATION.z };
+
+					glUniform3fv(chunkLocationLoc, 1, coords);
+					chunk->Draw();
+			}
+		}
 
 		glBindVertexArray(0);
 		glUseProgram(0);
@@ -513,8 +702,14 @@ int main() {
 		if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F7)) glEnable(GL_CULL_FACE);
 		if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F8)) glDisable(GL_CULL_FACE);
 
+		if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F9)) useVector = false;
+		if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F10)) useVector = true;
+
 		if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-			deltaTime += .3f;
+			deltaTime += .08f;
+
+		if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+			deltaTime += .32f;
 
 		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 			camera.ProcessKeyboard(FORWARD, deltaTime);

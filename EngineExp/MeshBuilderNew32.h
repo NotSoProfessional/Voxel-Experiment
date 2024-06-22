@@ -1,9 +1,23 @@
 #pragma once
 
 #include "MeshBuilder.h"
+#include "WorldManager.h"
+
+#include <string>
+#include <vector>
 
 class MeshBuilderNew32 : public MeshBuilder
 {
+private:
+	struct MeshSize;
+	struct LocalPoint;
+
+	uint8_t* FindVisibleFaces(const uint8_t chunk[]);
+	uint8_t* FindVisibleFacesCHUNK(Chunk* chunk, WorldManager* world);
+
+	void GreedyMesh(uint8_t*, MeshBuilder::Face, MeshSize*);
+	void GenerateGSInput(MeshSize*, MeshBuilder::Face, std::vector<VERT_TYPE>&);
+
 public:
 	using VERT_TYPE = uint32_t;
 
@@ -12,16 +26,11 @@ public:
 
 	//int VisibleBlocks = 0;
 
-	MeshBuilderNew32() : MeshBuilder(CHUNK_SIZE, &SHADER) {}
+	MeshBuilderNew32() : MeshBuilder(CHUNK_SIZE, &SHADER) {
+	}
 
 	void BuildMesh(const uint8_t chunk[], std::vector<VERT_TYPE>&);
+	void BuildMesh(Chunk*, WorldManager*, std::vector<VERT_TYPE>&);
 
-private:
-	struct MeshSize;
-	struct LocalPoint;
-
-	uint8_t* FindVisibleFaces(const uint8_t chunk[]);
-	void GreedyMesh(uint8_t*, Face, MeshSize*);
-	void GenerateGSInput(MeshSize*, Face, std::vector<VERT_TYPE>&);
 };
 

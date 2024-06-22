@@ -1,7 +1,11 @@
 #pragma once
 
+
 #include <vector>
 #include <string>
+
+class Chunk;
+class WorldManager;
 
 class MeshBuilder {
 public:
@@ -19,6 +23,7 @@ public:
         SHADER(shader){}
 
     virtual void BuildMesh(const uint8_t chunk[], std::vector<VERT_TYPE>&) = 0;
+    virtual void BuildMesh(Chunk*, WorldManager*, std::vector<VERT_TYPE>&) = 0;
 
     uint32_t ConvertCoords(uint16_t x, uint16_t z, uint16_t y) {
         return x + (z * CHUNK_SIZE) + (y * CHUNK_SQUARED);

@@ -90,6 +90,22 @@ void MeshBuilderNew16::BuildMesh(const uint8_t chunk[], std::vector<VERT_TYPE>& 
 	delete[] faces;
 }
 
+void MeshBuilderNew16::BuildMesh(Chunk* chunk, WorldManager* world, std::vector<VERT_TYPE>& verts) {
+	VisibleBlocks = 0;
+
+	uint8_t* faces = FindVisibleFacesCHUNK(chunk, world);
+
+	MeshSize* meshedFaces = new MeshSize[CHUNK_CUBED](MeshSize());
+
+	for (Face face = BACK; face < RIGHT + 1; face = static_cast<Face>(face << 1)) {
+		GreedyMesh(faces, face, meshedFaces);
+		GenerateGSInput(meshedFaces, face, verts);
+	}
+
+	delete[] meshedFaces;
+	delete[] faces;
+}
+
 uint8_t* MeshBuilderNew16::FindVisibleFaces(const uint8_t chunk[]) {
 	uint8_t* faces = new uint8_t[CHUNK_CUBED]();
 
@@ -127,6 +143,91 @@ uint8_t* MeshBuilderNew16::FindVisibleFaces(const uint8_t chunk[]) {
 					if (x != CHUNK_SIZE - 1 && !chunk[adjIndex]) faces[index] |= RIGHT;
 
 					if (faces[index] != 0) VisibleBlocks += 1;
+				}
+			}
+		}
+	}
+
+	return faces;
+}
+
+uint8_t* MeshBuilderNew16::FindVisibleFacesCHUNK(Chunk* chunk, WorldManager* world) {
+	uint8_t* faces = new uint8_t[CHUNK_CUBED]();
+
+	int chunkX = chunk->CHUNK_LOCATION.x;
+	int chunkY = chunk->CHUNK_LOCATION.y;
+	int chunkZ = chunk->CHUNK_LOCATION.z;
+
+	for (int y = 0; y < CHUNK_SIZE; y++) {
+		for (int z = 0; z < CHUNK_SIZE; z++) {
+			for (int x = 0; x < CHUNK_SIZE; x++) {
+				int index = chunk->ConvertCoords(x, y, z);
+
+				if (chunk->GetBlock(index).ID) {
+					uint8_t visibleFaces = 0;
+
+					if (z == 0) {
+						Utils::vec3 adjBlockLoc(x, y, CHUNK_SIZE - 1);
+						Utils::vec3 adjChunk(chunkX, chunkY, chunkZ - 1);
+						if (!world->GetBlock(adjBlockLoc, adjChunk).ID) visibleFaces |= BACK;
+					}
+					else {
+						//int adjIndex = chunk->ConvertCoords(x, y, z - 1);
+						if (!chunk->GetBlock(index - CHUNK_SIZE).ID) visibleFaces |= BACK;
+					}
+
+					if (z == CHUNK_SIZE - 1) {
+						Utils::vec3 adjBlockLoc(x, y, 0);
+						Utils::vec3 adjChunk(chunkX, chunkY, chunkZ + 1);
+						if (!world->GetBlock(adjBlockLoc, adjChunk).ID) visibleFaces |= FRONT;
+					}
+					else {
+						//int adjIndex = chunk->ConvertCoords(x, y, z + 1);
+						if (!chunk->GetBlock(index + CHUNK_SIZE).ID) visibleFaces |= FRONT;
+					}
+
+					if (y == CHUNK_SIZE - 1) {
+						Utils::vec3 adjBlockLoc(x, 0, z);
+						Utils::vec3 adjChunk(chunkX, chunkY + 1, chunkZ);
+						if (!world->GetBlock(adjBlockLoc, adjChunk).ID) visibleFaces |= TOP;
+					}
+					else {
+						//int adjIndex = chunk->ConvertCoords(x, y + 1, z);
+						if (!chunk->GetBlock(index + CHUNK_SQUARED).ID) visibleFaces |= TOP;
+					}
+
+					if (y == 0) {
+						Utils::vec3 adjBlockLoc(x, CHUNK_SIZE-1, z);
+						Utils::vec3 adjChunk(chunkX, chunkY - 1, chunkZ);
+						if (!world->GetBlock(adjBlockLoc, adjChunk).ID) visibleFaces |= BOTTOM;
+					}
+					else {
+						//int adjIndex = chunk->ConvertCoords(x, y - 1, z);
+						if (!chunk->GetBlock(index - CHUNK_SQUARED).ID) visibleFaces |= BOTTOM;
+					}
+
+					if (x == 0) {
+						Utils::vec3 adjBlockLoc(CHUNK_SIZE - 1, y, z);
+						Utils::vec3 adjChunk(chunkX - 1, chunkY, chunkZ);
+						if (!world->GetBlock(adjBlockLoc, adjChunk).ID) visibleFaces |= LEFT;
+					}
+					else {
+						//int adjIndex = chunk->ConvertCoords(x - 1, y, z);
+						if (!chunk->GetBlock(index - 1).ID) visibleFaces |= LEFT;
+					}
+
+					if (x == CHUNK_SIZE - 1) {
+						Utils::vec3 adjBlockLoc(0, y, z);
+						Utils::vec3 adjChunk(chunkX + 1, chunkY, chunkZ);
+						if (!world->GetBlock(adjBlockLoc, adjChunk).ID) visibleFaces |= RIGHT;
+					}
+					else {
+						//int adjIndex = chunk->ConvertCoords(x + 1, y, z);
+						if (!chunk->GetBlock(index + 1).ID) visibleFaces |= RIGHT;
+					}
+
+					faces[index] = visibleFaces;
+					if (visibleFaces != 0) VisibleBlocks += 1;
 				}
 			}
 		}

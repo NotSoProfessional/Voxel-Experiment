@@ -12,4 +12,4 @@ basicFrag
 chunk32
 pTestG
 chunk32
-basicFrag
+basicLighting

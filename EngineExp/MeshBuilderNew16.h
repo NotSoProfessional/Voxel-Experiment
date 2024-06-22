@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MeshBuilder.h"
+#include "WorldManager.h"
 
 class MeshBuilderNew16 : public MeshBuilder
 {
@@ -15,12 +16,15 @@ public:
 	MeshBuilderNew16() : MeshBuilder(CHUNK_SIZE, &SHADER){}
 
 	void BuildMesh(const uint8_t chunk[], std::vector<VERT_TYPE>&);
+	void BuildMesh(Chunk*, WorldManager*, std::vector<VERT_TYPE>&);
 
 private:
 	struct MeshSize;
 	struct LocalPoint;
 
 	uint8_t* FindVisibleFaces(const uint8_t chunk[]);
+	uint8_t* FindVisibleFacesCHUNK(Chunk* chunk, WorldManager* world);
+
 	void GreedyMesh(uint8_t*, Face, MeshSize*);
 	void GenerateGSInput(MeshSize*, Face, std::vector<VERT_TYPE>&);
 };

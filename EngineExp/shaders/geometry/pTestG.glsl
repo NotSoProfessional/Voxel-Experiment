@@ -8,10 +8,11 @@ uniform mat4 projectionMatrix;
 uniform mat4 viewMatrix;
 
 out vec2 texCoord;
+flat out int face;
 
 in VS_OUT{
 	vec2 uv;
-int face;
+	int face;
 } gs_in[];
 
 void main(void){
@@ -24,6 +25,8 @@ void main(void){
 	mat4 rotationMat = mat4(1);
 
 	vec2 uv = gs_in[0].uv + vec2(1, 1);
+
+	face = gs_in[0].face;
 
 	switch (gs_in[0].face) {
 	case 0:
