@@ -88,10 +88,10 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="..\..\..\..\Documents\FastNoise2\FastNoise2-v0.10.0-alpha-Win64-MSVC\FastNoise2\bin\FastNoise.dll">
+    <CopyFileToFolders Include="res\FastNoise.dll">
       <Filter>Resource Files</Filter>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="..\..\..\..\Documents\FastNoise2\FastNoise2-v0.10.0-alpha-Win64-MSVC\FastNoise2\bin\FastNoiseD.dll">
+    <CopyFileToFolders Include="res\FastNoiseD.dll">
       <Filter>Resource Files</Filter>
     </CopyFileToFolders>
   </ItemGroup>
