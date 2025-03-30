@@ -25,8 +25,11 @@ void main(void){
 	mat4 rotationMat = mat4(1);
 
 	vec2 uv = gs_in[0].uv + vec2(1, 1);
+	//uv = uv * vec2(0.25, 0.25);
 
 	face = gs_in[0].face;
+
+	vec4 scaler = vec4(0.5,0.5,0.5,1);
 
 	switch (gs_in[0].face) {
 	case 0:

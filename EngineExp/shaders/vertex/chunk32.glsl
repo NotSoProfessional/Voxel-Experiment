@@ -24,37 +24,43 @@ void main(void) {
 	int face = int((aVertData >> 25) & 0xF);
 	vs_out.face = face;
 
+	float scaler = 1;
+
+	float offset = (1 * scaler);
+
 	switch (face) {
 	case 1:
-		pos.z = pos.z + 1;
+		pos.z = pos.z + offset;
 
 		break;
 
 	case 2:
 		pos.y = pos.y;
-		pos.z = pos.z + 1;
+		pos.z = pos.z + offset;
 
 		break;
 
 	case 3:
-		pos.z = pos.z + 1;
-		pos.y = pos.y - 1;
+		pos.z = pos.z + offset;
+		pos.y = pos.y - offset;
 		break;
 
 	case 4:
 		//pos.x = pos.x-1;
-		pos.z = pos.z + 1;
+		pos.z = pos.z + offset;
 
 		break;
 
 	case 5:
-		pos.x = pos.x - 1;
-		pos.z = pos.z + 1;
+		pos.x = pos.x - offset;
+		pos.z = pos.z + offset;
 
 		break;
 	}
 
 	pos = pos + ((chunkLocation) * 32);
 
-	gl_Position = vec4(pos, 1.0);
+	//pos = pos * vec3(0.25, 0.25, 0.25);
+
+	gl_Position = vec4(pos, 1.0); //* vec4(0.5, 0.5, 0.5, 1.0);
 }
