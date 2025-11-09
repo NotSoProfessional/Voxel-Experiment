@@ -36,19 +36,19 @@ static int gl_height = 960;
 MeshBuilder* mb;
 
 enum ChunkType {
-	ALL,
-	EVERY_OTHER,
-	RANDOM
+    ALL,
+    EVERY_OTHER,
+    RANDOM
 };
 
 void error_callback(int error, const char* description) {
-	//fprintf(stderr, "Error: %s\n", description);
-	Log::GLLogErr("GLFW ERROR: code %i msg: %s\n", error, description);
+    //fprintf(stderr, "Error: %s\n", description);
+    Log::GLLogErr("GLFW ERROR: code %i msg: %s\n", error, description);
 }
 
 void window_size_callback(GLFWwindow* window, int width, int height) {
-	gl_width = width;
-	gl_height = height;
+    gl_width = width;
+    gl_height = height;
 }
 
 GLint init_used_mem_kb = 0;
@@ -56,26 +56,26 @@ GLint cur_avail_mem_kb = 0;
 GLint total_mem_kb = 0;
 
 void _update_fps_counter(GLFWwindow* window) {
-	static double previous_seconds = glfwGetTime();
-	static int frame_count;
-	double current_seconds = glfwGetTime();
-	double elapsed_seconds = current_seconds - previous_seconds;
-	if (elapsed_seconds > 0.1) {
-		previous_seconds = current_seconds;
-		double fps = (double)frame_count / elapsed_seconds;
-		char tmp[128];
-		sprintf_s(tmp, "opengl @ fps: %.2f ftime: %.2f", fps, 1000/fps);
-		glfwSetWindowTitle(window, tmp);
-		frame_count = 0;
+    static double previous_seconds = glfwGetTime();
+    static int frame_count;
+    double current_seconds = glfwGetTime();
+    double elapsed_seconds = current_seconds - previous_seconds;
+    if (elapsed_seconds > 0.1) {
+        previous_seconds = current_seconds;
+        double fps = (double)frame_count / elapsed_seconds;
+        char tmp[128];
+        sprintf_s(tmp, "opengl @ fps: %.2f ftime: %.2f", fps, 1000 / fps);
+        glfwSetWindowTitle(window, tmp);
+        frame_count = 0;
 
-		printf("\33[2K\r");
-		glGetIntegerv(GL_GPU_MEM_INFO_TOTAL_AVAILABLE_MEM_NVX,
-			&total_mem_kb);
-		glGetIntegerv(GL_GPU_MEM_INFO_CURRENT_AVAILABLE_MEM_NVX,
-			&cur_avail_mem_kb);
-		printf("Available video memory: %imb,  Used video memory: %imb~", cur_avail_mem_kb / 1000, ((total_mem_kb - cur_avail_mem_kb) - init_used_mem_kb) / 1000);
-	}
-	frame_count++;
+        printf("\33[2K\r");
+        glGetIntegerv(GL_GPU_MEM_INFO_TOTAL_AVAILABLE_MEM_NVX,
+            &total_mem_kb);
+        glGetIntegerv(GL_GPU_MEM_INFO_CURRENT_AVAILABLE_MEM_NVX,
+            &cur_avail_mem_kb);
+        printf("Available video memory: %imb,  Used video memory: %imb~", cur_avail_mem_kb / 1000, ((total_mem_kb - cur_avail_mem_kb) - init_used_mem_kb) / 1000);
+    }
+    frame_count++;
 }
 
 // timing
@@ -89,443 +89,450 @@ bool firstMouse = true;
 
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 {
-	float xpos = static_cast<float>(xposIn);
-	float ypos = static_cast<float>(yposIn);
+    float xpos = static_cast<float>(xposIn);
+    float ypos = static_cast<float>(yposIn);
 
-	if (firstMouse)
-	{
-		lastX = xpos;
-		lastY = ypos;
-		firstMouse = false;
-	}
+    if (firstMouse)
+    {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
 
-	float xoffset = xpos - lastX;
-	float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
 
-	lastX = xpos;
-	lastY = ypos;
+    lastX = xpos;
+    lastY = ypos;
 
-	camera.ProcessMouseMovement(xoffset, yoffset);
+    camera.ProcessMouseMovement(xoffset, yoffset);
 }
 
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called
 // ----------------------------------------------------------------------
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-	camera.ProcessMouseScroll(static_cast<float>(yoffset));
+    camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
 
 int main() {
-	
-	int input = -1;
 
-	std::cout << "Select chunk size:\n";
-	std::cout << "1) 8x8x8\n";
-	std::cout << "2) 16x16x16\n";
-	std::cout << "3) 32x32x32\n\n";
+    int input = -1;
 
-	while (input == -1) {
-		std::cin >> input;
+    std::cout << "Select chunk size:\n";
+    std::cout << "1) 8x8x8\n";
+    std::cout << "2) 16x16x16\n";
+    std::cout << "3) 32x32x32\n\n";
 
-		switch (input) {
-		case 1:
-			mb = new MeshBuilderNew8();
-			break;
+    while (input == -1) {
+        std::cin >> input;
 
-		case 2:
-			mb = new MeshBuilderNew16();
-			break;
+        switch (input) {
+        case 1:
+            mb = new MeshBuilderNew8();
+            break;
 
-		case 3:
-			mb = new MeshBuilderNew32();
-			break;
+        case 2:
+            mb = new MeshBuilderNew16();
+            break;
 
-		default:
-			std::cout << "Invalid input...\n\n";
-			std::cin.clear();
-			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        case 3:
+            mb = new MeshBuilderNew32();
+            break;
 
-			input = -1;
+        default:
+            std::cout << "Invalid input...\n\n";
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-			break;
-		}
-	}
+            input = -1;
 
-	ChunkType chunkType;
+            break;
+        }
+    }
 
-	std::cout << "Select chunk type:\n";
-	std::cout << "1) All (Best Case)\n";
-	std::cout << "2) Every Other (Worst Case)\n";
-	std::cout << "3) Random\n\n";
+    ChunkType chunkType;
 
-	input = -1;
+    std::cout << "Select chunk type:\n";
+    std::cout << "1) All (Best Case)\n";
+    std::cout << "2) Every Other (Worst Case)\n";
+    std::cout << "3) Random\n\n";
 
-	while (input == -1) {
-		std::cin >> input;
+    input = -1;
 
-		switch (input) {
-		case 1:
-			chunkType = ALL;
-			break;
+    while (input == -1) {
+        std::cin >> input;
 
-		case 2:
-			chunkType = EVERY_OTHER;
-			break;
+        switch (input) {
+        case 1:
+            chunkType = ALL;
+            break;
 
-		case 3:
-			chunkType = RANDOM;
-			break;
+        case 2:
+            chunkType = EVERY_OTHER;
+            break;
 
-		default:
-			std::cout << "Invalid input...\n\n";
-			std::cin.clear();
-			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        case 3:
+            chunkType = RANDOM;
+            break;
 
-			input = -1;
+        default:
+            std::cout << "Invalid input...\n\n";
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-			break;
-		}
-	}
+            input = -1;
 
-	assert(Log::RestartGLLog());
+            break;
+        }
+    }
 
-	Log::GLLog("started GLFW\n%s\n", glfwGetVersionString());
+    assert(Log::RestartGLLog());
 
-	if (!glfwInit()) {
-		//std::cout << "Failed to initialise GLFW!" << std::endl;
-		Log::GLLogErr("GLFW ERROR: failed to initialise!");
-		return 1;
-	}
+    Log::GLLog("started GLFW\n%s\n", glfwGetVersionString());
 
-	glfwSetErrorCallback(error_callback);
+    if (!glfwInit()) {
+        //std::cout << "Failed to initialise GLFW!" << std::endl;
+        Log::GLLogErr("GLFW ERROR: failed to initialise!");
+        return 1;
+    }
 
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwSetErrorCallback(error_callback);
 
-	glfwWindowHint(GLFW_SAMPLES, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	int monitorCount;
-	GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
+    glfwWindowHint(GLFW_SAMPLES, 4);
 
-	int outputMonitor = 0;
+    int monitorCount;
+    GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
 
-	if (monitorCount > 1) outputMonitor = 1;
+    int outputMonitor = 0;
 
-	const GLFWvidmode* mode = glfwGetVideoMode(monitors[outputMonitor]);
+    std::cout << monitorCount << std::endl;
 
-	int xPos, yPos;
-	glfwGetMonitorPos(monitors[outputMonitor], &xPos, &yPos);
-
-	GLFWwindow* window = glfwCreateWindow(gl_width, gl_height, "EngineExp", NULL, NULL);
-	if (!window) {
-		Log::GLLogErr("GLFW ERROR: window or opengl context creation failed!");
-		//std::cout << "Window or OpenGL context creation failed!" << std::endl;
-		return 1;
-	}
-
-	glfwMakeContextCurrent(window);
-	if (!gladLoadGL()) {
-		Log::GLLogErr("GLAD ERROR: failed to initialise function pointers!");
-		//std::cout << "Glad failed to initialise function pointers!" << std::endl;
-	}
-
-	glfwSetWindowPos(window, ((mode->width - gl_width)/2) + xPos, ((mode->height - gl_height)/2) + yPos);
-
-	glGetIntegerv(GL_GPU_MEM_INFO_CURRENT_AVAILABLE_MEM_NVX,
-		&cur_avail_mem_kb);
-	glGetIntegerv(GL_GPU_MEM_INFO_TOTAL_AVAILABLE_MEM_NVX,
-		&total_mem_kb);
-
-	init_used_mem_kb = total_mem_kb - cur_avail_mem_kb;
-
-	glfwSetWindowSizeCallback(window, window_size_callback);
-	glfwSetCursorPosCallback(window, mouse_callback);
-	glfwSetScrollCallback(window, scroll_callback);
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS);
-
-	Log::GLParams();
-
-	double startTime = glfwGetTime();
-
-	Shaders::LoadAll();
-
-	double endTime = glfwGetTime();
-
-	//std::cout << "Loaded, compiled, and linked shaders in " << (endTime - startTime)*1000 << " miliseconds" << '\n';
-	Log::GLLog("Loaded, compiled, and linked shaders in %f miliseconds\n", (endTime - startTime) * 1000);
-
-	//Shaders::ListShaders();
-	//Shaders::ListPrograms();
-
-	unsigned int texture;
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture); // all upcoming GL_TEXTURE_2D operations now have effect on this texture object
-	// set the texture wrapping parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	// set texture filtering parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	// load image, create texture and generate mipmaps
-	int width, height, nrChannels;
-	// The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
-	unsigned char* data = stbi_load("textures/container.jpg", &width, &height, &nrChannels, 0);
-	if (data)
-	{
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-	}
-	else
-	{
-		std::cout << "Failed to load texture" << std::endl;
-	}
-	stbi_image_free(data);
-	
-
-	std::vector<uint8_t> flatchunk(mb->CHUNK_CUBED);
-
-	int faces = 0;
-
-	std::srand(std::time(nullptr));
-
-	for (int i = 0; i < mb->CHUNK_SIZE; i++) {
-		for (int j = 0; j < mb->CHUNK_SIZE; j++) {
-			for (int k = 0; k < mb->CHUNK_SIZE; k++) {
-
-				int val;
-
-				switch (chunkType) {
-				case ALL:
-					val = 1;
-					break;
-
-				case EVERY_OTHER:
-					val = ((k + j + i) % 2 == 0) ? 1 : 0;
-
-					break;
+    switch (monitorCount) {
+    case 2:
+        outputMonitor = 1;
+    case 3:
+        outputMonitor = 2;
+    }
 
-				case RANDOM:
-					val = std::rand() % 2;
-					//if (std::rand() % 2) val = 1;
-					break;
-				}
-			
-				// For chunk type of most unique blocks possible
-				//if (!i || !j || !k) val = 1;
-				//if (i==7 || j==7 || k==7) val = 1;
-				 
-				// For chunk type for every third block
-				//int val = ((k + j + i) % 3 == 0) ? 1 : 0;
+    const GLFWvidmode* mode = glfwGetVideoMode(monitors[outputMonitor]);
+
+    int xPos, yPos;
+    glfwGetMonitorPos(monitors[outputMonitor], &xPos, &yPos);
 
-				faces += val * 6;
+    GLFWwindow* window = glfwCreateWindow(gl_width, gl_height, "EngineExp", NULL, NULL);
+    if (!window) {
+        Log::GLLogErr("GLFW ERROR: window or opengl context creation failed!");
+        //std::cout << "Window or OpenGL context creation failed!" << std::endl;
+        return 1;
+    }
 
-				flatchunk[mb->ConvertCoords(k, j, i)] = val;
+    glfwMakeContextCurrent(window);
+    if (!gladLoadGL()) {
+        Log::GLLogErr("GLAD ERROR: failed to initialise function pointers!");
+        //std::cout << "Glad failed to initialise function pointers!" << std::endl;
+    }
 
-				//std::cout << mb16.ConvertCoords(k, j, i) << std::endl;
-			}
+    glfwSetWindowPos(window, ((mode->width - gl_width) / 2) + xPos, ((mode->height - gl_height) / 2) + yPos);
 
-			//std::cout << "\n";
-		}
+    glGetIntegerv(GL_GPU_MEM_INFO_CURRENT_AVAILABLE_MEM_NVX,
+        &cur_avail_mem_kb);
+    glGetIntegerv(GL_GPU_MEM_INFO_TOTAL_AVAILABLE_MEM_NVX,
+        &total_mem_kb);
 
-		//std::cout << "\n";
-	}
+    init_used_mem_kb = total_mem_kb - cur_avail_mem_kb;
 
+    glfwSetWindowSizeCallback(window, window_size_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-	std::cout << "\n";
-	std::cout << "\n";
-	
-	startTime = glfwGetTime();
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
 
-	std::vector<uint32_t> verts;
-	mb->BuildMesh(flatchunk.data(), verts);
-	
-	endTime = glfwGetTime();
+    Log::GLParams();
 
-	double reduction = 100 - (((float) verts.size() / faces) * 100.f);
-	double size = (4 * verts.size()) / 1024.f;
+    double startTime = glfwGetTime();
 
-	std::cout << "Generated chunk mesh in " << (endTime - startTime) * 1000 << "ms\n";
-	std::cout << "Visible blocks " << mb->VisibleBlocks << "\n";
-	std::cout << "No. faces in chunk " << faces << "\n";
-	std::cout << "No. of points " << verts.size() << "\n";
+    Shaders::LoadAll();
 
-	//std::setprecision(1);
-	std::cout << "Reduction from culling and meshing " << reduction << "%\n";
-	std::cout << "Chunk size in buffer: " << size << "KB\n\n";
+    double endTime = glfwGetTime();
 
+    //std::cout << "Loaded, compiled, and linked shaders in " << (endTime - startTime)*1000 << " miliseconds" << '\n';
+    Log::GLLog("Loaded, compiled, and linked shaders in %f miliseconds\n", (endTime - startTime) * 1000);
 
-	unsigned int eVBO, eVAO;
-	glGenVertexArrays(1, &eVAO);
-	glGenBuffers(1, &eVBO);
+    //Shaders::ListShaders();
+    //Shaders::ListPrograms();
 
-	glBindBuffer(GL_ARRAY_BUFFER, eVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(uint32_t)*verts.size(), verts.data(), GL_STATIC_DRAW);
-	
-	glBindVertexArray(eVAO);
-	glVertexAttribIPointer(0, 1, GL_UNSIGNED_INT, 0, (void*)0);
-	glEnableVertexAttribArray(0);
-	glBindVertexArray(0);
+    unsigned int texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture); // all upcoming GL_TEXTURE_2D operations now have effect on this texture object
+    // set the texture wrapping parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // set texture filtering parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // load image, create texture and generate mipmaps
+    int width, height, nrChannels;
+    // The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
+    unsigned char* data = stbi_load("textures/container.jpg", &width, &height, &nrChannels, 0);
+    if (data)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data);
 
-	// Old Axis object
-	/*GLuint axisVAO, axisVBO;
-	GLfloat axis[] = {
-		// X-axis
-		0.0f, 0.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,
 
-		// Y-axis
-		0.0f, 0.0f, 0.0f,
-		0.0f, 1.0f, 0.0f,
+    std::vector<uint8_t> flatchunk(mb->CHUNK_CUBED);
 
-		// Z-axis
-		0.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 1.0f
-	};
+    int faces = 0;
 
-	glGenVertexArrays(1, &axisVAO);
-	glGenBuffers(1, &axisVBO);
+    std::srand(std::time(nullptr));
 
-	glBindVertexArray(axisVAO);
+    for (int i = 0; i < mb->CHUNK_SIZE; i++) {
+        for (int j = 0; j < mb->CHUNK_SIZE; j++) {
+            for (int k = 0; k < mb->CHUNK_SIZE; k++) {
 
-	glBindBuffer(GL_ARRAY_BUFFER, axisVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(axis), axis, GL_STATIC_DRAW);
+                int val;
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
-	glEnableVertexAttribArray(0);
+                switch (chunkType) {
+                case ALL:
+                    val = 1;
+                    break;
 
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);*/
+                case EVERY_OTHER:
+                    val = ((k + j + i) % 2 == 0) ? 1 : 0;
 
-	glm::mat4 model = glm::mat4(1.0f);
-	glm::mat4 view = glm::mat4(1.0f);
-	glm::mat4 projection = glm::mat4(1.0f);
+                    break;
 
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                case RANDOM:
+                    val = std::rand() % 2;
+                    //if (std::rand() % 2) val = 1;
+                    break;
+                }
 
-	//glEnable(GL_CULL_FACE);
-	//glCullFace(GL_FRONT);
+                // For chunk type of most unique blocks possible
+                //if (!i || !j || !k) val = 1;
+                //if (i==7 || j==7 || k==7) val = 1;
 
-	float draw_distance = 100.0f;
+                // For chunk type for every third block
+                //int val = ((k + j + i) % 3 == 0) ? 1 : 0;
 
-	GLfloat tgPoint[] = {
-		0.0f, 0.0f, 0.0f
-	};
+                faces += val * 6;
 
-	GLuint tgVBO, tgVAO;
-	glGenVertexArrays(1, &tgVAO);
-	glGenBuffers(1, &tgVBO);
+                flatchunk[mb->ConvertCoords(k, j, i)] = val;
 
-	glBindVertexArray(tgVAO);
+                //std::cout << mb16.ConvertCoords(k, j, i) << std::endl;
+            }
 
-	glBindBuffer(GL_ARRAY_BUFFER, tgVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(tgPoint), &tgPoint, GL_STATIC_DRAW);
+            //std::cout << "\n";
+        }
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
-	glEnableVertexAttribArray(0);
+        //std::cout << "\n";
+    }
 
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
 
-	glClearColor(0.6f, 0.6f, 0.8f, 1.0f);
+    std::cout << "\n";
+    std::cout << "\n";
 
+    startTime = glfwGetTime();
 
-	const char* chunkShader = mb->SHADER->c_str();
+    std::vector<uint32_t> verts;
+    mb->BuildMesh(flatchunk.data(), verts);
 
-	GLuint chunkProgram = Shaders::GetProgramId(chunkShader);
+    endTime = glfwGetTime();
 
-	GLint modelLoc = Shaders::GetUniformLoc(chunkShader, "modelMatrix");
-	GLint viewLoc = Shaders::GetUniformLoc(chunkShader, "viewMatrix");
-	GLint projectionLoc = Shaders::GetUniformLoc(chunkShader, "projectionMatrix");
+    double reduction = 100 - (((float)verts.size() / faces) * 100.f);
+    double size = (4 * verts.size()) / 1024.f;
 
-	GLint chunkLocationLoc = Shaders::GetUniformLoc(chunkShader, "chunkLocation");
+    std::cout << "Generated chunk mesh in " << (endTime - startTime) * 1000 << "ms\n";
+    std::cout << "Visible blocks " << mb->VisibleBlocks << "\n";
+    std::cout << "No. faces in chunk " << faces << "\n";
+    std::cout << "No. of points " << verts.size() << "\n";
 
-	uint32_t nbOfChunks = 2;
-	glm::vec3 chunkLocation(0);
+    //std::setprecision(1);
+    std::cout << "Reduction from culling and meshing " << reduction << "%\n";
+    std::cout << "Chunk size in buffer: " << size << "KB\n\n";
 
-	std::cout << "" << typeid(*mb).name() << "\n";
-	std::cout << "" << typeid(MeshBuilderNew16).name() << "\n";
 
-	while (!glfwWindowShouldClose(window)) {
-		_update_fps_counter(window);
+    unsigned int eVBO, eVAO;
+    glGenVertexArrays(1, &eVAO);
+    glGenBuffers(1, &eVBO);
 
-		float currentFrame = static_cast<float>(glfwGetTime());
-		deltaTime = currentFrame - lastFrame;
-		lastFrame = currentFrame;
+    glBindBuffer(GL_ARRAY_BUFFER, eVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(uint32_t) * verts.size(), verts.data(), GL_STATIC_DRAW);
 
-		glViewport(0, 0, gl_width, gl_height);
+    glBindVertexArray(eVAO);
+    glVertexAttribIPointer(0, 1, GL_UNSIGNED_INT, 0, (void*)0);
+    glEnableVertexAttribArray(0);
+    glBindVertexArray(0);
 
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // Old Axis object
+    /*GLuint axisVAO, axisVBO;
+    GLfloat axis[] = {
+        // X-axis
+        0.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
 
-		Shaders::UseProgram(chunkProgram);
+        // Y-axis
+        0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
 
-		projection = glm::perspective(glm::radians(45.0f), (float)gl_width / (float)gl_height, 0.1f, draw_distance);
-		glm::mat4 view = camera.GetViewMatrix();
-		
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
-		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+        // Z-axis
+        0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f
+    };
 
-		glBindTexture(GL_TEXTURE_2D, texture);
+    glGenVertexArrays(1, &axisVAO);
+    glGenBuffers(1, &axisVBO);
 
-		glBindVertexArray(eVAO);
+    glBindVertexArray(axisVAO);
 
-		if (typeid(*mb) == typeid(MeshBuilderNew32) || typeid(*mb) == typeid(MeshBuilderNew16)) {
-			for (int x = 0; x < nbOfChunks; x++) {
-				for (int y = 0; y < 24; y++) {
-					for (int z = 0; z < nbOfChunks; z++) {
-						chunkLocation.x = x;
-						chunkLocation.y = y;
-						chunkLocation.z = z;
+    glBindBuffer(GL_ARRAY_BUFFER, axisVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(axis), axis, GL_STATIC_DRAW);
 
-						//std::cout << chunkLocation.x << " " << chunkLocation.y << " " << chunkLocation.z << std::endl;
-						glUniform3fv(chunkLocationLoc, 1, glm::value_ptr(chunkLocation));
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+    glEnableVertexAttribArray(0);
 
-						glDrawArrays(GL_POINTS, 0, verts.size());
-					}
-				}
-			}
-		}
-		else {
-			glDrawArrays(GL_POINTS, 0, verts.size());
-		}
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);*/
 
+    glm::mat4 model = glm::mat4(1.0f);
+    glm::mat4 view = glm::mat4(1.0f);
+    glm::mat4 projection = glm::mat4(1.0f);
 
-		glBindVertexArray(0);
-		glUseProgram(0);
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
+    //glEnable(GL_CULL_FACE);
+    //glCullFace(GL_FRONT);
 
-		glfwPollEvents();
+    float draw_distance = 100.0f;
 
-		glfwSwapBuffers(window);
+    GLfloat tgPoint[] = {
+        0.0f, 0.0f, 0.0f
+    };
 
-		if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_ESCAPE)) glfwSetWindowShouldClose(window, 1);
-		if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F1)) Shaders::ReloadProgramShaders();
-		if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F2)) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F3)) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    GLuint tgVBO, tgVAO;
+    glGenVertexArrays(1, &tgVAO);
+    glGenBuffers(1, &tgVBO);
 
-		if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F5)) draw_distance--;
-		if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F6)) draw_distance++;
-		if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F7)) glEnable(GL_CULL_FACE);
-		if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F8)) glDisable(GL_CULL_FACE);
+    glBindVertexArray(tgVAO);
 
-		if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-			deltaTime += .3f;
+    glBindBuffer(GL_ARRAY_BUFFER, tgVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(tgPoint), &tgPoint, GL_STATIC_DRAW);
 
-		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-			camera.ProcessKeyboard(FORWARD, deltaTime);
-		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-			camera.ProcessKeyboard(BACKWARD, deltaTime);
-		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-			camera.ProcessKeyboard(Camera_Movement::WEST, deltaTime);
-		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-			camera.ProcessKeyboard(Camera_Movement::EAST, deltaTime);
-	}
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+    glEnableVertexAttribArray(0);
 
-	glfwTerminate();
-	return 0;
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    glClearColor(0.6f, 0.6f, 0.8f, 1.0f);
+
+
+    const char* chunkShader = mb->SHADER->c_str();
+
+    GLuint chunkProgram = Shaders::GetProgramId(chunkShader);
+
+    GLint modelLoc = Shaders::GetUniformLoc(chunkShader, "modelMatrix");
+    GLint viewLoc = Shaders::GetUniformLoc(chunkShader, "viewMatrix");
+    GLint projectionLoc = Shaders::GetUniformLoc(chunkShader, "projectionMatrix");
+
+    GLint chunkLocationLoc = Shaders::GetUniformLoc(chunkShader, "chunkLocation");
+
+    uint32_t nbOfChunks = 2;
+    glm::vec3 chunkLocation(0);
+
+    std::cout << "" << typeid(*mb).name() << "\n";
+    std::cout << "" << typeid(MeshBuilderNew16).name() << "\n";
+
+    while (!glfwWindowShouldClose(window)) {
+        _update_fps_counter(window);
+
+        float currentFrame = static_cast<float>(glfwGetTime());
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
+        glViewport(0, 0, gl_width, gl_height);
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        Shaders::UseProgram(chunkProgram);
+
+        projection = glm::perspective(glm::radians(45.0f), (float)gl_width / (float)gl_height, 0.1f, draw_distance);
+        glm::mat4 view = camera.GetViewMatrix();
+
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
+        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+
+        glBindTexture(GL_TEXTURE_2D, texture);
+
+        glBindVertexArray(eVAO);
+
+        if (typeid(*mb) == typeid(MeshBuilderNew32) || typeid(*mb) == typeid(MeshBuilderNew16)) {
+            for (int x = 0; x < nbOfChunks; x++) {
+                for (int y = 0; y < 24; y++) {
+                    for (int z = 0; z < nbOfChunks; z++) {
+                        chunkLocation.x = x;
+                        chunkLocation.y = y;
+                        chunkLocation.z = z;
+
+                        //std::cout << chunkLocation.x << " " << chunkLocation.y << " " << chunkLocation.z << std::endl;
+                        glUniform3fv(chunkLocationLoc, 1, glm::value_ptr(chunkLocation));
+
+                        glDrawArrays(GL_POINTS, 0, verts.size());
+                    }
+                }
+            }
+        }
+        else {
+            glDrawArrays(GL_POINTS, 0, verts.size());
+        }
+
+
+        glBindVertexArray(0);
+        glUseProgram(0);
+
+
+        glfwPollEvents();
+
+        glfwSwapBuffers(window);
+
+        if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_ESCAPE)) glfwSetWindowShouldClose(window, 1);
+        if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F1)) Shaders::ReloadProgramShaders();
+        if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F2)) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F3)) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+        if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F5)) draw_distance--;
+        if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F6)) draw_distance++;
+        if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F7)) glEnable(GL_CULL_FACE);
+        if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F8)) glDisable(GL_CULL_FACE);
+
+        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+            deltaTime += .3f;
+
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+            camera.ProcessKeyboard(FORWARD, deltaTime);
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+            camera.ProcessKeyboard(BACKWARD, deltaTime);
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+            camera.ProcessKeyboard(Camera_Movement::WEST, deltaTime);
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+            camera.ProcessKeyboard(Camera_Movement::EAST, deltaTime);
+    }
+
+    glfwTerminate();
+    return 0;
 }
