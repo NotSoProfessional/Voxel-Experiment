@@ -1,5 +1,5 @@
 #include "MeshBuilderNew32.h"
-
+#include <iostream>
 
 //
 // Define Structs
@@ -30,6 +30,11 @@ struct MeshBuilderNew32::MeshSize {
 struct MeshBuilderNew32::LocalPoint {
 	uint32_t data = 0;
 
+	void SetBlock(uint32_t block) {
+		block = static_cast<uint32_t>(block) << 28;
+		data = block |= (data & 0xCFFFFFFF);
+	}
+		 
 	void SetFace(uint32_t face) {
 		face = face << 25;
 		data = face |= (data & 0xF1FFFFFF);
@@ -59,7 +64,7 @@ struct MeshBuilderNew32::LocalPoint {
 		data = v |= (data & 0xFFFFFFE0);
 	}
 
-	void SetAll(uint32_t x, uint32_t y, uint32_t z, uint32_t u, uint32_t v, uint32_t face) {
+	void SetAll(uint32_t x, uint32_t y, uint32_t z, uint32_t u, uint32_t v, uint32_t face, uint32_t block) {
 		SetX(x);
 		SetY(y);
 		SetZ(z);
@@ -67,6 +72,8 @@ struct MeshBuilderNew32::LocalPoint {
 		SetV(v);
 
 		SetFace(face);
+
+		SetBlock(block);
 	}
 };
 
@@ -263,7 +270,8 @@ void MeshBuilderNew32::GenerateGSInput(MeshSize* meshedFaces, Face face, std::ve
 
 		LocalPoint p;
 
-		p.SetAll(x, y, z, static_cast<uint32_t>(u - 1), static_cast<uint32_t>(v - 1), faceShaderVal);
+		p.SetAll(x, y, z, static_cast<uint32_t>(u - 1), static_cast<uint32_t>(v - 1), faceShaderVal, static_cast<uint32_t>(i+1 % 4));
+
 		points.emplace_back(p.data);
 	}
 }

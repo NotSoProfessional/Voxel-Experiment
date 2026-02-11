@@ -2,13 +2,14 @@
 
 uniform vec3 chunkLocation;
 
-layout(location = 0) in mediump int aVertData;
+layout(location = 0) in int aVertData;
 
 in vec3 position;
 
 out VS_OUT{
 	vec2 uv;
 	int face;
+	int block;
 } vs_out;
 
 void main(void) {
@@ -20,8 +21,10 @@ void main(void) {
 	vs_out.uv.x = float((aVertData >> 5) & 0x1F);
 	vs_out.uv.y = float((aVertData) & 0x1F);
 
-	int face = int((aVertData >> 25) & 0xF);
+	int face = int((aVertData >> 25) & 0x7);
 	vs_out.face = face;
+
+	vs_out.block = int((aVertData >> 28) & 0x3);
 
 	switch (face) {
 	case 1:

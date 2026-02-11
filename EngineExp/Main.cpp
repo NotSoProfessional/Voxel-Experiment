@@ -60,7 +60,7 @@ void _update_fps_counter(GLFWwindow* window) {
     static int frame_count;
     double current_seconds = glfwGetTime();
     double elapsed_seconds = current_seconds - previous_seconds;
-    if (elapsed_seconds > 0.1) {
+    if (elapsed_seconds > 0.5) {
         previous_seconds = current_seconds;
         double fps = (double)frame_count / elapsed_seconds;
         char tmp[128];
@@ -238,6 +238,8 @@ int main() {
         //std::cout << "Glad failed to initialise function pointers!" << std::endl;
     }
 
+    glfwSwapInterval(1);
+
     glfwSetWindowPos(window, ((mode->width - gl_width) / 2) + xPos, ((mode->height - gl_height) / 2) + yPos);
 
     glGetIntegerv(GL_GPU_MEM_INFO_CURRENT_AVAILABLE_MEM_NVX,
@@ -276,15 +278,16 @@ int main() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     // set texture filtering parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     // load image, create texture and generate mipmaps
     int width, height, nrChannels;
     // The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
-    unsigned char* data = stbi_load("textures/container.jpg", &width, &height, &nrChannels, 0);
+    // unsigned char* data = stbi_load("textures/container.jpg", &width, &height, &nrChannels, 0);
+    unsigned char* data = stbi_load("textures/sheet.png", &width, &height, &nrChannels, 0);
     if (data)
     {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
     }
     else
@@ -414,7 +417,7 @@ int main() {
 
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    //glEnable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
     //glCullFace(GL_FRONT);
 
     float draw_distance = 100.0f;
@@ -451,11 +454,19 @@ int main() {
 
     GLint chunkLocationLoc = Shaders::GetUniformLoc(chunkShader, "chunkLocation");
 
-    uint32_t nbOfChunks = 2;
+    uint32_t nbOfChunks = 8;
     glm::vec3 chunkLocation(0);
 
     std::cout << "" << typeid(*mb).name() << "\n";
     std::cout << "" << typeid(MeshBuilderNew16).name() << "\n";
+
+    std::cout << nbOfChunks * nbOfChunks * 8 << "\n";
+
+    GLint maxOut;
+
+    glGetIntegerv(GL_MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS, &maxOut);
+
+    std::cout << maxOut << "\n";
 
     while (!glfwWindowShouldClose(window)) {
         _update_fps_counter(window);
@@ -478,12 +489,11 @@ int main() {
         glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
         glBindTexture(GL_TEXTURE_2D, texture);
-
         glBindVertexArray(eVAO);
 
         if (typeid(*mb) == typeid(MeshBuilderNew32) || typeid(*mb) == typeid(MeshBuilderNew16)) {
             for (int x = 0; x < nbOfChunks; x++) {
-                for (int y = 0; y < 24; y++) {
+                for (int y = 0; y < 8; y++) {
                     for (int z = 0; z < nbOfChunks; z++) {
                         chunkLocation.x = x;
                         chunkLocation.y = y;
