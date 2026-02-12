@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <functional>
 #include <cassert>
 #include <filesystem>
 #include "Shaders.h"
@@ -41,6 +42,11 @@ enum ChunkType {
     RANDOM
 };
 
+enum RenderMethod {
+    PURE_VERTEX,
+    GEOMETRY,
+};
+
 void error_callback(int error, const char* description) {
     //fprintf(stderr, "Error: %s\n", description);
     Log::GLLogErr("GLFW ERROR: code %i msg: %s\n", error, description);
@@ -49,6 +55,15 @@ void error_callback(int error, const char* description) {
 void window_size_callback(GLFWwindow* window, int width, int height) {
     gl_width = width;
     gl_height = height;
+}
+
+static std::string helloWorld(std::string output) {
+    return output;
+}
+
+void drawFn(const std::vector<uint32_t>& verts) {
+        glDrawArrays(GL_POINTS, 0, verts.size());
+
 }
 
 GLint init_used_mem_kb = 0;
@@ -118,6 +133,37 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 int main() {
 
     int input = -1;
+
+	std::cout << "Select render method:\n";
+	std::cout << "1) Pure vertex shader (No geometry shader)\n";
+	std::cout << "2) Geometry shader\n\n";
+
+    RenderMethod renderMethod;
+
+    while (input == -1) {
+        std::cin >> input;
+
+        switch (input-1) {
+        case RenderMethod::PURE_VERTEX:
+            renderMethod = RenderMethod::PURE_VERTEX;
+            break;
+
+        case RenderMethod::GEOMETRY:
+            renderMethod = RenderMethod::GEOMETRY;
+            break;
+        default:
+			std::cout << "Invalid input...\n\n";
+			std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+            input = -1;
+
+            break;
+        }
+    }
+
+    input = -1;
+
 
     std::cout << "Select chunk size:\n";
     std::cout << "1) 8x8x8\n";
@@ -373,11 +419,20 @@ int main() {
     glGenVertexArrays(1, &eVAO);
     glGenBuffers(1, &eVBO);
 
-    glBindBuffer(GL_ARRAY_BUFFER, eVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(uint32_t) * verts.size(), verts.data(), GL_STATIC_DRAW);
+	if (renderMethod == RenderMethod::GEOMETRY) {
+        glBindBuffer(GL_ARRAY_BUFFER, eVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(uint32_t) * verts.size(), verts.data(), GL_STATIC_DRAW);
 
-    glBindVertexArray(eVAO);
-    glVertexAttribIPointer(0, 1, GL_UNSIGNED_INT, 0, (void*)0);
+        glBindVertexArray(eVAO);
+        glVertexAttribIPointer(0, 1, GL_UNSIGNED_INT, 0, (void*)0);
+    }
+    else {
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, eVBO);
+        // Using GL_STATIC_DRAW since your data is static
+        glBufferData(GL_SHADER_STORAGE_BUFFER, verts.size() * sizeof(uint32_t), verts.data(), GL_STATIC_DRAW);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, eVBO); // Bind to binding point 0
+    }
+   
     glEnableVertexAttribArray(0);
     glBindVertexArray(0);
 
@@ -444,7 +499,8 @@ int main() {
     glClearColor(0.6f, 0.6f, 0.8f, 1.0f);
 
 
-    const char* chunkShader = mb->SHADER->c_str();
+    //const char* chunkShader = mb->SHADER->c_str();
+    const char* chunkShader = renderMethod == RenderMethod::GEOMETRY ? "chunk32" : "chunk32Vert";
 
     GLuint chunkProgram = Shaders::GetProgramId(chunkShader);
 
@@ -462,11 +518,10 @@ int main() {
 
     std::cout << nbOfChunks * nbOfChunks * 8 << "\n";
 
-    GLint maxOut;
-
-    glGetIntegerv(GL_MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS, &maxOut);
-
-    std::cout << maxOut << "\n";
+    //std::string (*test)(std::string);
+    std::function<void()> geometryDraw = [&verts]() { glDrawArrays(GL_POINTS, 0, verts.size()); };
+    std::function<void()> pureVertexDraw = [&verts]() { glDrawArrays(GL_TRIANGLES, 0, verts.size()*6); };
+    std::function<void()> drawArrays = (renderMethod == RenderMethod::GEOMETRY) ? geometryDraw : pureVertexDraw;
 
     while (!glfwWindowShouldClose(window)) {
         _update_fps_counter(window);
@@ -502,7 +557,11 @@ int main() {
                         //std::cout << chunkLocation.x << " " << chunkLocation.y << " " << chunkLocation.z << std::endl;
                         glUniform3fv(chunkLocationLoc, 1, glm::value_ptr(chunkLocation));
 
-                        glDrawArrays(GL_POINTS, 0, verts.size());
+                        //glDrawArrays(GL_POINTS, 0, verts.size());
+                        //glDrawArrays(GL_TRIANGLES, 0, verts.size() * 6);
+                        drawArrays();
+                        //pureVertexDraw();
+                        //geometryDraw();
                     }
                 }
             }
@@ -546,3 +605,4 @@ int main() {
     glfwTerminate();
     return 0;
 }
+

@@ -13,3 +13,7 @@ chunk32
 pTestG
 chunk32
 basicFrag
+#
+chunk32Vert
+chunk32VertOnly
+basicFrag

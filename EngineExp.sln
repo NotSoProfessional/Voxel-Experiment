@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.8.34330.188
+# Visual Studio Version 18
+VisualStudioVersion = 18.2.11430.68 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EngineExp", "EngineExp\EngineExp.vcxproj", "{4A38DF75-2FF5-4010-ABFD-BC6054FE8F73}"
 EndProject
@@ -24,6 +24,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "vertex", "vertex", "{25590F
 	ProjectSection(SolutionItems) = preProject
 		EngineExp\shaders\vertex\chunk16.glsl = EngineExp\shaders\vertex\chunk16.glsl
 		EngineExp\shaders\vertex\chunk32.glsl = EngineExp\shaders\vertex\chunk32.glsl
+		EngineExp\shaders\vertex\chunk32VertOnly.glsl = EngineExp\shaders\vertex\chunk32VertOnly.glsl
 		EngineExp\shaders\vertex\pTest.glsl = EngineExp\shaders\vertex\pTest.glsl
 	EndProjectSection
 EndProject

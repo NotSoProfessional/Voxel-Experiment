@@ -34,6 +34,6 @@ void main(void) {
 
     // 5. Apply your face-based shading
      float shade = float(face) * 0.167 + .2;
-     FragColor = texColor * vec4(shade, shade, shade, 1.0);
-
+      FragColor = texColor * vec4(shade, shade, shade, 1.0);
+     // FragColor = vec4(0.5,0.5,0.5,1.0);
 }
