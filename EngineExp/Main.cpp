@@ -5,12 +5,15 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/matrix_access.hpp>
+
 
 #include <iostream>
 #include <fstream>
 #include <functional>
 #include <cassert>
 #include <filesystem>
+#include <array>
 #include "Shaders.h"
 #include "Log.h"
 
@@ -128,6 +131,61 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     camera.ProcessMouseScroll(static_cast<float>(yoffset));
+}
+
+struct Plane {
+    glm::vec3 normal;
+    float distance;
+
+    Plane() = default;
+
+    // Correct normalization for frustum planes
+    void set(glm::vec4 row) {
+        float length = glm::length(glm::vec3(row));
+        normal = glm::vec3(row) / length;
+        distance = row.w / length;
+    }
+
+    float getSignedDistance(const glm::vec3& point) const {
+        return glm::dot(normal, point) + distance;
+    }
+};
+
+//bool IsVisible(const glm::vec3& center, float radius, const std::array<Plane, 6>& planes) {
+//    for (const auto& plane : planes) {
+//        if (plane.getSignedDistance(center) < -radius) {
+//            return false;
+//        }
+//    }
+//    return true;
+//}
+
+bool IsVisible(const glm::vec3& center, float radius, const std::array<Plane, 6>& planes) {
+    for (int i = 0; i < 6; i++) {
+        // If the sphere is behind the plane by more than its radius, it's outside
+        if (planes[i].getSignedDistance(center) < -radius) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void ExtractPlanes(std::array<Plane, 6>& planes, const glm::mat4& VP) {
+    //std::array<Plane, 6> planes;
+
+    // Manually extract rows from column-major matrix
+    glm::vec4 row1(VP[0][0], VP[1][0], VP[2][0], VP[3][0]);
+    glm::vec4 row2(VP[0][1], VP[1][1], VP[2][1], VP[3][1]);
+    glm::vec4 row3(VP[0][2], VP[1][2], VP[2][2], VP[3][2]);
+    glm::vec4 row4(VP[0][3], VP[1][3], VP[2][3], VP[3][3]);
+
+    // Gribb-Hartmann extraction
+    planes[0].set(row4 + row1); // Left
+    planes[1].set(row4 - row1); // Right
+    planes[2].set(row4 + row2); // Bottom
+    planes[3].set(row4 - row2); // Top
+    planes[4].set(row4 + row3); // Near
+    planes[5].set(row4 - row3); // Far
 }
 
 int main() {
@@ -284,7 +342,7 @@ int main() {
         //std::cout << "Glad failed to initialise function pointers!" << std::endl;
     }
 
-    glfwSwapInterval(1);
+    //glfwSwapInterval(1);
 
     glfwSetWindowPos(window, ((mode->width - gl_width) / 2) + xPos, ((mode->height - gl_height) / 2) + yPos);
 
@@ -500,7 +558,9 @@ int main() {
 
 
     //const char* chunkShader = mb->SHADER->c_str();
-    const char* chunkShader = renderMethod == RenderMethod::GEOMETRY ? "chunk32" : "chunk32Vert";
+    const char* chunkShader = (renderMethod == RenderMethod::GEOMETRY)
+                                  ? mb->SHADER->c_str()
+                                  : "chunk32Vert";
 
     GLuint chunkProgram = Shaders::GetProgramId(chunkShader);
 
@@ -510,7 +570,7 @@ int main() {
 
     GLint chunkLocationLoc = Shaders::GetUniformLoc(chunkShader, "chunkLocation");
 
-    uint32_t nbOfChunks = 8;
+    uint32_t nbOfChunks = 16;
     glm::vec3 chunkLocation(0);
 
     std::cout << "" << typeid(*mb).name() << "\n";
@@ -520,8 +580,22 @@ int main() {
 
     //std::string (*test)(std::string);
     std::function<void()> geometryDraw = [&verts]() { glDrawArrays(GL_POINTS, 0, verts.size()); };
-    std::function<void()> pureVertexDraw = [&verts]() { glDrawArrays(GL_TRIANGLES, 0, verts.size()*6); };
+    std::function<void()> pureVertexDraw = [&verts]() { glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, verts.size()); };
     std::function<void()> drawArrays = (renderMethod == RenderMethod::GEOMETRY) ? geometryDraw : pureVertexDraw;
+
+	glm::mat4 VP = view[0][0] * projection;
+
+    glm::vec4 row1 = glm::row(VP, 0);
+    glm::vec4 row2 = glm::row(VP, 1);
+    glm::vec4 row3 = glm::row(VP, 2);
+    glm::vec4 row4 = glm::row(VP, 3);
+
+    // Create the 6 planes
+    std::array<Plane, 6> planes;
+
+    glm::vec3 worldLoc;
+    glm::vec3 chunkSize(32);
+    glm::vec3 offset(16);
 
     while (!glfwWindowShouldClose(window)) {
         _update_fps_counter(window);
@@ -546,6 +620,9 @@ int main() {
         glBindTexture(GL_TEXTURE_2D, texture);
         glBindVertexArray(eVAO);
 
+        VP = projection * view;
+        ExtractPlanes(planes, VP);
+
         if (typeid(*mb) == typeid(MeshBuilderNew32) || typeid(*mb) == typeid(MeshBuilderNew16)) {
             for (int x = 0; x < nbOfChunks; x++) {
                 for (int y = 0; y < 8; y++) {
@@ -554,12 +631,18 @@ int main() {
                         chunkLocation.y = y;
                         chunkLocation.z = z;
 
+                        worldLoc = (chunkLocation * chunkSize);
+
                         //std::cout << chunkLocation.x << " " << chunkLocation.y << " " << chunkLocation.z << std::endl;
+                        if (IsVisible(worldLoc+offset, 32, planes)) {
                         glUniform3fv(chunkLocationLoc, 1, glm::value_ptr(chunkLocation));
+                        drawArrays();
+
+                        }
 
                         //glDrawArrays(GL_POINTS, 0, verts.size());
+                        //glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, verts.size());
                         //glDrawArrays(GL_TRIANGLES, 0, verts.size() * 6);
-                        drawArrays();
                         //pureVertexDraw();
                         //geometryDraw();
                     }

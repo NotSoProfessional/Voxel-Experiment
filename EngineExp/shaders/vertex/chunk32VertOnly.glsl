@@ -15,10 +15,11 @@ out int face;
 out int block;
 
 void main(void){
-	int quadId=gl_VertexID/6;
-	int cornerId=gl_VertexID%6;
+	//int quadId=gl_VertexID/6;
+	int cornerId=gl_VertexID%4;
 	
-	int aVertData=packedData[quadId];
+	//int aVertData=packedData[quadId];
+	int aVertData=packedData[gl_InstanceID];
 	
 	vec3 pos;
 	vec2 uv;
